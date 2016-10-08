@@ -67,7 +67,7 @@ macro(_common_compile_stuff VISIBILITY)
   endif()
 
   if(ARG_USES_WEBP)
-    target_link_libraries("${NAME}" webp)
+    target_link_libraries("${NAME}" "/usr/local/lib/libwebp.dylib")
   endif()
 
   # We rely on Ceres to find glog and gflags for us.
