@@ -20,6 +20,8 @@ google_library(mapping_3d_acceleration_cost_function
   USES_EIGEN
   HDRS
     acceleration_cost_function.h
+  SRCS
+    ../dummy.cc
 )
 
 google_library(mapping_3d_ceres_pose
@@ -50,6 +52,8 @@ google_library(mapping_3d_hybrid_grid
   USES_GLOG
   HDRS
     hybrid_grid.h
+  SRCS
+    ../dummy.cc  
   DEPENDS
     common_make_unique
     common_math
@@ -220,6 +224,8 @@ google_library(mapping_3d_rotation_cost_function
   USES_EIGEN
   HDRS
     rotation_cost_function.h
+  SRCS
+    ../dummy.cc
 )
 
 google_library(mapping_3d_sparse_pose_graph
@@ -275,6 +281,8 @@ google_library(mapping_3d_translation_cost_function
   USES_EIGEN
   HDRS
     translation_cost_function.h
+  SRCS
+    ../dummy.cc
 )
 
 google_test(mapping_3d_hybrid_grid_test
