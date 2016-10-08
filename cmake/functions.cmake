@@ -59,7 +59,7 @@ macro(_common_compile_stuff VISIBILITY)
   endif()
 
   if(ARG_USES_WEBP)
-    target_link_libraries("${NAME}" webp)
+    target_link_libraries("${NAME}" "/usr/local/lib/libwebp.dylib")
   endif()
 
   # Add the binary directory first, so that port.h is included after it has

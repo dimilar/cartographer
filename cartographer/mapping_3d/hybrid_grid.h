@@ -21,6 +21,7 @@
 #include <limits>
 #include <utility>
 #include <vector>
+#include <array>
 
 #include "Eigen/Core"
 #include "cartographer/common/make_unique.h"

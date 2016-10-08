@@ -141,6 +141,8 @@ google_library(mapping_3d_local_trajectory_builder
 google_library(mapping_3d_local_trajectory_builder_interface
   HDRS
     local_trajectory_builder_interface.h
+  SRCS
+    ../dummy.cc
   DEPENDS
     common_time
     mapping_3d_submaps
