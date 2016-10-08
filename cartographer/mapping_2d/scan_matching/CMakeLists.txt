@@ -82,6 +82,8 @@ google_library(mapping_2d_scan_matching_occupied_space_cost_functor
   USES_EIGEN
   HDRS
     occupied_space_cost_functor.h
+  SRCS
+    ../../dummy.cc
   DEPENDS
     mapping_2d_probability_grid
     sensor_point_cloud
@@ -108,6 +110,8 @@ google_library(mapping_2d_scan_matching_rotation_delta_cost_functor
   USES_EIGEN
   HDRS
     rotation_delta_cost_functor.h
+  SRCS
+    ../../dummy.cc
   DEPENDS
     transform_transform
 )
@@ -116,6 +120,8 @@ google_library(mapping_2d_scan_matching_translation_delta_cost_functor
   USES_EIGEN
   HDRS
     translation_delta_cost_functor.h
+  SRCS
+    ../../dummy.cc
 )
 
 google_test(mapping_2d_scan_matching_ceres_scan_matcher_test

@@ -73,6 +73,8 @@ google_library(mapping_sensor_collator
   USES_EIGEN
   HDRS
     sensor_collator.h
+  SRCS
+    ../dummy.cc
   DEPENDS
     common_make_unique
     common_ordered_multi_queue
@@ -130,6 +132,8 @@ google_library(mapping_trajectory_node
   USES_EIGEN
   HDRS
     trajectory_node.h
+  SRCS
+    ../dummy.cc
   DEPENDS
     common_time
     sensor_laser

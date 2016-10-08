@@ -72,6 +72,8 @@ google_library(mapping_2d_map_limits
   USES_EIGEN
   HDRS
     map_limits.h
+  SRCS
+    ../dummy.cc
   DEPENDS
     common_math
     mapping_2d_xy_index
@@ -86,6 +88,8 @@ google_library(mapping_2d_probability_grid
   USES_CERES
   HDRS
     probability_grid.h
+  SRCS
+    ../dummy.cc  
   DEPENDS
     common_math
     common_port
@@ -162,6 +166,8 @@ google_library(mapping_2d_xy_index
   USES_EIGEN
   HDRS
     xy_index.h
+  SRCS
+    ../dummy.cc
   DEPENDS
     common_math
     common_port

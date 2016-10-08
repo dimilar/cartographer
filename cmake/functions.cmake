@@ -54,7 +54,7 @@ macro(_common_compile_stuff VISIBILITY)
 
   if(ARG_USES_BOOST)
     target_include_directories("${NAME}" SYSTEM ${VISIBILITY}
-      "{Boost_INCLUDE_DIRS}")
+      "/usr/local/include")
     target_link_libraries("${NAME}" "${Boost_LIBRARIES}")
   endif()
 
@@ -182,6 +182,7 @@ function(google_test NAME)
   target_include_directories("${NAME}" SYSTEM PRIVATE
     "${GMOCK_SRC_DIR}/gtest/include")
   target_link_libraries("${NAME}" gmock_main)
+  target_link_libraries("${NAME}" /usr/local/lib/libgtest.dylib)
 
   add_test(${NAME} ${NAME})
 endfunction()

@@ -52,7 +52,7 @@ if(SPHINX_FOUND)
   add_subdirectory("docs")
 endif()
 
-set(GMOCK_SRC_DIR "/usr/src/gmock" CACHE STRING "Path to google-mock sources.")
+set(GMOCK_SRC_DIR "/scratch/personal/Dropbox/programming/cv/gtest/googlemock" CACHE STRING "Path to google-mock sources.")
 
 add_subdirectory(${GMOCK_SRC_DIR} "${CMAKE_CURRENT_BINARY_DIR}/gmock")
 
@@ -60,7 +60,7 @@ google_add_flag(GOOG_CXX_FLAGS "-std=c++11")
 
 if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
   google_add_flag(GOOG_CXX_FLAGS "-Weverything")
-  google_add_flag(GOOG_CXX_FLAGS "-Werror=deprecated")
+  #google_add_flag(GOOG_CXX_FLAGS "-Werror=deprecated")
   google_add_flag(GOOG_CXX_FLAGS "-Werror=non-pod-varargs")
 else()
   google_add_flag(GOOG_CXX_FLAGS "-Wall")
@@ -92,6 +92,9 @@ set(CARTOGRAPHER_LIBRARY_DIRS "${CMAKE_INSTALL_PREFIX}/lib")
 list(APPEND CARTOGRAPHER_LIBRARY_DIRS "${LUA_LIBRARY_DIR}")
 
 set(CARTOGRAPHER_INCLUDE_DIRS "${CMAKE_INSTALL_PREFIX}/include")
+list(APPEND CARTOGRAPHER_INCLUDE_DIRS "/usr/local/include")
+list(APPEND CARTOGRAPHER_INCLUDE_DIRS "/scratch/personal/Dropbox/programming/cv/gtest/googlemock/include")
+list(APPEND CARTOGRAPHER_INCLUDE_DIRS "/scratch/personal/Dropbox/programming/cv/gtest/gtest/include")
 list(APPEND CARTOGRAPHER_INCLUDE_DIRS "${LUA_INCLUDE_DIR}")
 list(APPEND CARTOGRAPHER_INCLUDE_DIRS "${CERES_INCLUDE_DIRS}")
 list(APPEND CARTOGRAPHER_INCLUDE_DIRS "${PROTOBUF_INCLUDE_DIR}")
@@ -114,7 +117,7 @@ list(APPEND CARTOGRAPHER_LIBRARIES "${CERES_LIBRARIES}")
 list(APPEND CARTOGRAPHER_LIBRARIES "${Boost_LIBRARIES}")
 list(APPEND CARTOGRAPHER_LIBRARIES "${LUA_LIBRARIES}")
 list(APPEND CARTOGRAPHER_LIBRARIES "${PROTOBUF_LIBRARIES}")
-list(APPEND CARTOGRAPHER_LIBRARIES "webp")
+list(APPEND CARTOGRAPHER_LIBRARIES "/usr/local/lib/libwebp.dylib")
 
 CONFIGURE_PACKAGE_CONFIG_FILE(
   cartographer-config.cmake.in
