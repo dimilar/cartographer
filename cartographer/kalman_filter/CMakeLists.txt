@@ -16,8 +16,6 @@ add_subdirectory("proto")
 
 google_library(kalman_filter_gaussian_distribution
   USES_EIGEN
-  SRCS
-    ../dummy.cc
   HDRS
     gaussian_distribution.h
 )
@@ -33,8 +31,8 @@ google_library(kalman_filter_odometry_state_tracker
 )
 
 google_library(kalman_filter_pose_tracker
-  USES_CERES
   USES_EIGEN
+  USES_GLOG
   SRCS
     pose_tracker.cc
   HDRS
@@ -53,14 +51,12 @@ google_library(kalman_filter_pose_tracker
 )
 
 google_library(kalman_filter_unscented_kalman_filter
-  USES_CERES
   USES_EIGEN
+  USES_GLOG
   HDRS
     unscented_kalman_filter.h
   DEPENDS
     kalman_filter_gaussian_distribution
-  SRCS
-    ../dummy.cc  
 )
 
 google_test(kalman_filter_gaussian_distribution_test

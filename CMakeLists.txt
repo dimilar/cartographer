@@ -21,6 +21,20 @@ set(CARTOGRAPHER_PATCH_VERSION 0)
 set(CARTOGRAPHER_VERSION ${CARTOGRAPHER_MAJOR_VERSION}.${CARTOGRAPHER_MINOR_VERSION}.${CARTOGRAPHER_PATCH_VERSION})
 set(CARTOGRAPHER_SOVERSION ${CARTOGRAPHER_MAJOR_VERSION}.${CARTOGRAPHER_MINOR_VERSION})
 
+if (CMAKE_SYSTEM_NAME MATCHES "Darwin")
+  find_program(HOMEBREW_EXECUTABLE brew)
+  mark_as_advanced(FORCE HOMEBREW_EXECUTABLE)
+  if (HOMEBREW_EXECUTABLE)
+    # Detected a Homebrew install, query for its install prefix.
+    execute_process(COMMAND ${HOMEBREW_EXECUTABLE} --prefix
+      OUTPUT_VARIABLE HOMEBREW_INSTALL_PREFIX
+      OUTPUT_STRIP_TRAILING_WHITESPACE)
+    message(STATUS "Detected Homebrew with install prefix: "
+      "${HOMEBREW_INSTALL_PREFIX}, adding to CMake search paths.")
+    list(APPEND CMAKE_PREFIX_PATH "${HOMEBREW_INSTALL_PREFIX}")
+  endif()
+endif()
+
 include("${CMAKE_SOURCE_DIR}/cmake/functions.cmake")
 SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules)
 
@@ -51,10 +65,6 @@ find_package(Sphinx)
 if(SPHINX_FOUND)
   add_subdirectory("docs")
 endif()
-
-set(GMOCK_SRC_DIR "/scratch/personal/Dropbox/programming/cv/gtest/googlemock" CACHE STRING "Path to google-mock sources.")
-
-add_subdirectory(${GMOCK_SRC_DIR} "${CMAKE_CURRENT_BINARY_DIR}/gmock")
 
 google_add_flag(GOOG_CXX_FLAGS "-std=c++11")
 
@@ -92,9 +102,6 @@ set(CARTOGRAPHER_LIBRARY_DIRS "${CMAKE_INSTALL_PREFIX}/lib")
 list(APPEND CARTOGRAPHER_LIBRARY_DIRS "${LUA_LIBRARY_DIR}")
 
 set(CARTOGRAPHER_INCLUDE_DIRS "${CMAKE_INSTALL_PREFIX}/include")
-list(APPEND CARTOGRAPHER_INCLUDE_DIRS "/usr/local/include")
-list(APPEND CARTOGRAPHER_INCLUDE_DIRS "/scratch/personal/Dropbox/programming/cv/gtest/googlemock/include")
-list(APPEND CARTOGRAPHER_INCLUDE_DIRS "/scratch/personal/Dropbox/programming/cv/gtest/gtest/include")
 list(APPEND CARTOGRAPHER_INCLUDE_DIRS "${LUA_INCLUDE_DIR}")
 list(APPEND CARTOGRAPHER_INCLUDE_DIRS "${CERES_INCLUDE_DIRS}")
 list(APPEND CARTOGRAPHER_INCLUDE_DIRS "${PROTOBUF_INCLUDE_DIR}")
@@ -117,7 +124,6 @@ list(APPEND CARTOGRAPHER_LIBRARIES "${CERES_LIBRARIES}")
 list(APPEND CARTOGRAPHER_LIBRARIES "${Boost_LIBRARIES}")
 list(APPEND CARTOGRAPHER_LIBRARIES "${LUA_LIBRARIES}")
 list(APPEND CARTOGRAPHER_LIBRARIES "${PROTOBUF_LIBRARIES}")
-list(APPEND CARTOGRAPHER_LIBRARIES "/usr/local/lib/libwebp.dylib")
 
 CONFIGURE_PACKAGE_CONFIG_FILE(
   cartographer-config.cmake.in

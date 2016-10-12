@@ -19,9 +19,7 @@ configure_file (
   ${CMAKE_CURRENT_BINARY_DIR}/config.h)
 
 google_library(common_blocking_queue
-  USES_CERES
-  SRCS
-    ../dummy.cc  
+  USES_GLOG
   HDRS
     blocking_queue.h
   DEPENDS
@@ -44,12 +42,10 @@ google_library(common_ceres_solver_options
 google_library(common_config
   HDRS
     config.h
-  SRCS
-    ../dummy.cc  
 )
 
 google_library(common_configuration_file_resolver
-  USES_CERES
+  USES_GLOG
   SRCS
     configuration_file_resolver.cc
   HDRS
@@ -70,7 +66,7 @@ google_library(common_fixed_ratio_sampler
 )
 
 google_library(common_histogram
-  USES_CERES
+  USES_GLOG
   SRCS
     histogram.cc
   HDRS
@@ -83,12 +79,10 @@ google_library(common_lua
   USES_LUA
   HDRS
     lua.h
-  SRCS
-    ../dummy.cc  
 )
 
 google_library(common_lua_parameter_dictionary
-  USES_CERES
+  USES_GLOG
   SRCS
     lua_parameter_dictionary.cc
   HDRS
@@ -99,22 +93,18 @@ google_library(common_lua_parameter_dictionary
 )
 
 google_library(common_lua_parameter_dictionary_test_helpers
-  USES_CERES
+  USES_GLOG
   HDRS
     lua_parameter_dictionary_test_helpers.h
   DEPENDS
     common_lua_parameter_dictionary
     common_make_unique
     common_port
-  SRCS
-    ../dummy.cc    
 )
 
 google_library(common_make_unique
   HDRS
     make_unique.h
-  SRCS
-    ../dummy.cc
 )
 
 google_library(common_math
@@ -122,8 +112,6 @@ google_library(common_math
   USES_EIGEN
   HDRS
     math.h
-  SRCS
-    ../dummy.cc  
   DEPENDS
     common_port
 )
@@ -131,8 +119,6 @@ google_library(common_math
 google_library(common_mutex
   HDRS
     mutex.h
-  SRCS
-    ../dummy.cc  
   DEPENDS
     common_time
 )
@@ -140,8 +126,6 @@ google_library(common_mutex
 google_library(common_ordered_multi_queue
   HDRS
     ordered_multi_queue.h
-  SRCS
-    ../dummy.cc  
   DEPENDS
     common_blocking_queue
     common_make_unique
@@ -152,9 +136,6 @@ google_library(common_port
   USES_BOOST
   HDRS
     port.h
-  SRCS
-    ../dummy.cc
-  
 )
 
 google_library(common_rate_timer
@@ -164,12 +145,10 @@ google_library(common_rate_timer
     common_math
     common_port
     common_time
-  SRCS
-    ../dummy.cc    
 )
 
 google_library(common_thread_pool
-  USES_CERES
+  USES_GLOG
   SRCS
     thread_pool.cc
   HDRS
@@ -179,7 +158,6 @@ google_library(common_thread_pool
 )
 
 google_library(common_time
-  USES_BOOST
   SRCS
     time.cc
   HDRS

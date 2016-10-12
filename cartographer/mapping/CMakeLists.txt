@@ -29,8 +29,8 @@ google_library(mapping_global_trajectory_builder_interface
 )
 
 google_library(mapping_map_builder
-  USES_CERES
   USES_EIGEN
+  USES_GLOG
   SRCS
     map_builder.cc
   HDRS
@@ -58,7 +58,7 @@ google_library(mapping_map_builder
 )
 
 google_library(mapping_probability_values
-  USES_CERES
+  USES_GLOG
   SRCS
     probability_values.cc
   HDRS
@@ -69,12 +69,10 @@ google_library(mapping_probability_values
 )
 
 google_library(mapping_sensor_collator
-  USES_CERES
   USES_EIGEN
+  USES_GLOG
   HDRS
     sensor_collator.h
-  SRCS
-    ../dummy.cc
   DEPENDS
     common_make_unique
     common_ordered_multi_queue
@@ -83,7 +81,7 @@ google_library(mapping_sensor_collator
 )
 
 google_library(mapping_sparse_pose_graph
-  USES_CERES
+  USES_GLOG
   SRCS
     sparse_pose_graph.cc
   HDRS
@@ -100,8 +98,8 @@ google_library(mapping_sparse_pose_graph
 )
 
 google_library(mapping_submaps
-  USES_CERES
   USES_EIGEN
+  USES_GLOG
   SRCS
     submaps.cc
   HDRS
@@ -117,7 +115,7 @@ google_library(mapping_submaps
 )
 
 google_library(mapping_trajectory_connectivity
-  USES_CERES
+  USES_GLOG
   SRCS
     trajectory_connectivity.cc
   HDRS
@@ -132,8 +130,6 @@ google_library(mapping_trajectory_node
   USES_EIGEN
   HDRS
     trajectory_node.h
-  SRCS
-    ../dummy.cc
   DEPENDS
     common_time
     sensor_laser
@@ -159,7 +155,7 @@ google_test(mapping_sensor_collator_test
 )
 
 google_test(mapping_sparse_pose_graph_test
-  USES_CERES
+  USES_GLOG
   SRCS
     sparse_pose_graph_test.cc
   DEPENDS
