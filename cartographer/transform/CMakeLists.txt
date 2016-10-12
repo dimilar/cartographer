@@ -34,8 +34,6 @@ google_library(transform_rigid_transform_test_helpers
   DEPENDS
     common_port
     transform_rigid_transform
-  SRCS
-    ../dummy.cc    
 )
 
 google_library(transform_transform

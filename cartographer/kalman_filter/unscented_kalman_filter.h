@@ -26,7 +26,7 @@
 #include "Eigen/Core"
 #include "Eigen/Eigenvalues"
 #include "cartographer/kalman_filter/gaussian_distribution.h"
-#include "glog/logging.h"
+#include <glog/logging.h>
 
 namespace cartographer {
 namespace kalman_filter {

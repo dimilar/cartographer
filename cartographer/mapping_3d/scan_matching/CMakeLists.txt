@@ -62,8 +62,6 @@ google_library(mapping_3d_scan_matching_fast_correlative_scan_matcher
 google_library(mapping_3d_scan_matching_interpolated_grid
   HDRS
     interpolated_grid.h
-  SRCS
-    ../../dummy.cc
   DEPENDS
     mapping_3d_hybrid_grid
 )
@@ -72,8 +70,6 @@ google_library(mapping_3d_scan_matching_occupied_space_cost_functor
   USES_EIGEN
   HDRS
     occupied_space_cost_functor.h
-  SRCS
-    ../../dummy.cc
   DEPENDS
     mapping_3d_hybrid_grid
     mapping_3d_scan_matching_interpolated_grid
@@ -115,8 +111,6 @@ google_library(mapping_3d_scan_matching_rotation_delta_cost_functor
   USES_EIGEN
   HDRS
     rotation_delta_cost_functor.h
-  SRCS
-    ../../dummy.cc
   DEPENDS
     transform_rigid_transform
     transform_transform
@@ -138,8 +132,6 @@ google_library(mapping_3d_scan_matching_translation_delta_cost_functor
   USES_EIGEN
   HDRS
     translation_delta_cost_functor.h
-  SRCS
-    ../../dummy.cc
   DEPENDS
     transform_rigid_transform
 )

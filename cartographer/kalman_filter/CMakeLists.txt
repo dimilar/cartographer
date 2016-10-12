@@ -16,8 +16,6 @@ add_subdirectory("proto")
 
 google_library(kalman_filter_gaussian_distribution
   USES_EIGEN
-  SRCS
-    ../dummy.cc
   HDRS
     gaussian_distribution.h
 )
@@ -50,8 +48,6 @@ google_library(kalman_filter_unscented_kalman_filter
     unscented_kalman_filter.h
   DEPENDS
     kalman_filter_gaussian_distribution
-  SRCS
-    ../dummy.cc  
 )
 
 google_test(kalman_filter_gaussian_distribution_test
