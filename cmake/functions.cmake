@@ -16,14 +16,23 @@ include(CMakeParseArguments)
 
 macro(_parse_arguments ARGS)
   set(OPTIONS
+    USES_BOOST    
     USES_CERES
     USES_EIGEN
     USES_GFLAGS    
     USES_GLOG
     USES_LUA
-    USES_BOOST
     USES_WEBP
-  )
+    )
+  
+  # Options only used by projects using Cartographers cmake files.
+  list(APPEND OPTIONS
+    USES_CARTOGRAPHER
+    USES_PCL
+    USES_ROS
+    USES_YAMLCPP
+    USES_ZLIB
+  )  
   set(ONE_VALUE_ARG )
   set(MULTI_VALUE_ARGS SRCS HDRS DEPENDS)
   cmake_parse_arguments(ARG
@@ -77,6 +86,44 @@ macro(_common_compile_stuff VISIBILITY)
     find_library(GFLAGS_LIBRARY gflags)
     target_link_libraries("${NAME}" ${GFLAGS_LIBRARY})
   endif()
+
+  if(ARG_USES_ROS)
+    target_include_directories("${NAME}" SYSTEM ${VISIBILITY}
+      "${catkin_INCLUDE_DIRS}")
+    target_link_libraries("${NAME}" ${catkin_LIBRARIES})
+    add_dependencies("${NAME}" ${catkin_EXPORTED_TARGETS}
+  )
+  endif()  
+
+  if(ARG_USES_ZLIB)
+    target_include_directories("${NAME}" SYSTEM ${VISIBILITY}
+      "${ZLIB_INCLUDE_DIRS}")
+    target_link_libraries("${NAME}" ${ZLIB_LIBRARIES})
+  endif()
+
+  if(ARG_USES_CARTOGRAPHER)
+    target_include_directories("${NAME}" SYSTEM ${VISIBILITY}
+      "${CARTOGRAPHER_INCLUDE_DIRS}")
+    link_directories("${CARTOGRAPHER_LIBRARY_DIRS}")
+    target_link_libraries("${NAME}" ${CARTOGRAPHER_LIBRARIES})
+  endif()
+
+  if(ARG_USES_PCL)
+    target_include_directories("${NAME}" SYSTEM ${VISIBILITY}
+      "${PCL_INCLUDE_DIRS}")
+    target_link_libraries("${NAME}" ${PCL_LIBRARIES})
+    foreach(DEFINITION ${PCL_DEFINITIONS})
+      set(TARGET_COMPILE_FLAGS "${TARGET_COMPILE_FLAGS} ${DEFINITION}")
+    endforeach()
+  endif()
+
+  if(ARG_USES_YAMLCPP)
+    find_library(YAML_CPP_LIBRARY yaml-cpp)    
+    target_link_libraries("${NAME}" ${YAML_CPP_LIBRARY})
+  endif()
+
+  set_target_properties(${NAME} PROPERTIES
+    COMPILE_FLAGS ${TARGET_COMPILE_FLAGS})  
   
   # Add the binary directory first, so that port.h is included after it has
   # been generated.
@@ -204,9 +251,7 @@ function(google_add_flag VAR_NAME FLAG)
   endif()
 endfunction()
 
-function(google_test NAME)
-  _parse_arguments("${ARGN}")
-    
+macro(_common_test_stuff)
   add_executable(${NAME}
     ${ARG_SRCS} ${ARG_HDRS}
     )
@@ -223,8 +268,44 @@ function(google_test NAME)
   
   target_link_libraries("${NAME}" ${GMOCK_LIBRARY})
   target_link_libraries("${NAME}" ${GEST_LIBRARY})
+endmacro()
+
+function(google_catkin_test NAME)
+  if(NOT "${CATKIN_ENABLE_TESTING}")
+    return()
+  endif()
+
+  _parse_arguments("${ARGN}")
+  _common_test_stuff()
+
+  # Copied from the catkin sources. Tracked in ros/catkin:#830.
+  add_dependencies(tests ${NAME})
+  get_target_property(_target_path ${NAME} RUNTIME_OUTPUT_DIRECTORY)
+  set(cmd "${_target_path}/${NAME} --gtest_output=xml:${CATKIN_TEST_RESULTS_DIR}/${PROJECT_NAME}/gtest-${NAME}.xml")
+  catkin_run_tests_target("gtest" ${NAME} "gtest-${NAME}.xml"
+    COMMAND ${cmd}
+    DEPENDENCIES ${NAME}
+    WORKING_DIRECTORY ${ARG_WORKING_DIRECTORY})
+endfunction()
+
+function(google_test NAME)
+  _parse_arguments("${ARGN}")
+  _common_test_stuff()
 
   add_test(${NAME} ${NAME})
+endfunction()
+
+
+function(google_binary NAME)
+  _parse_arguments("${ARGN}")
+
+  add_executable(${NAME}
+    ${ARG_SRCS} ${ARG_HDRS}
+  )
+
+  _common_compile_stuff("PRIVATE")
+
+  install(TARGETS "${NAME}" RUNTIME DESTINATION bin)
 endfunction()
 
 function(google_library NAME)
@@ -299,3 +380,44 @@ function(google_proto_library NAME)
   # PROTOBUF_LIBRARIES, but that failed on first try.
   target_link_libraries("${NAME}" "${PROTOBUF_LIBRARY}" pthread)
 endfunction()
+
+macro(google_initialize_cartographer_project)
+  SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules)
+  set(GOOG_CXX_FLAGS "-pthread -std=c++11 ${GOOG_CXX_FLAGS}")
+
+  if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+    google_add_flag(GOOG_CXX_FLAGS "-Weverything")
+    google_add_flag(GOOG_CXX_FLAGS "-Werror=non-pod-varargs")
+  else()
+    google_add_flag(GOOG_CXX_FLAGS "-Wall")
+    google_add_flag(GOOG_CXX_FLAGS "-Wpedantic")
+  endif()
+
+
+  # Turn some warnings into errors.
+  google_add_flag(GOOG_CXX_FLAGS "-Werror=format-security")
+  google_add_flag(GOOG_CXX_FLAGS "-Werror=reorder")
+  google_add_flag(GOOG_CXX_FLAGS "-Werror=return-type")
+  google_add_flag(GOOG_CXX_FLAGS "-Werror=uninitialized")
+
+  if(NOT CMAKE_BUILD_TYPE OR CMAKE_BUILD_TYPE STREQUAL "")
+    set(CMAKE_BUILD_TYPE Release)
+  endif()
+
+  if(CMAKE_BUILD_TYPE STREQUAL "Release")
+    google_add_flag(GOOG_CXX_FLAGS "-O3 -DNDEBUG")
+  elseif(CMAKE_BUILD_TYPE STREQUAL "RelWithDebInfo")
+    google_add_flag(GOOG_CXX_FLAGS "-O3 -g -DNDEBUG")
+  elseif(CMAKE_BUILD_TYPE STREQUAL "Debug")
+    message(FATAL_ERROR "Compiling in debug mode is not supported.")
+  else()
+    message(FATAL_ERROR "Unknown CMAKE_BUILD_TYPE: ${CMAKE_BUILD_TYPE}")
+  endif()
+
+  message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
+
+endmacro()
+
+macro(google_enable_testing)
+  enable_testing()
+endmacro()
