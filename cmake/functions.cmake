@@ -31,7 +31,6 @@ macro(_parse_arguments ARGS)
     USES_PCL
     USES_ROS
     USES_YAMLCPP
-    USES_ZLIB
   )  
   set(ONE_VALUE_ARG )
   set(MULTI_VALUE_ARGS SRCS HDRS DEPENDS)
@@ -41,26 +40,24 @@ endmacro(_parse_arguments)
 
 macro(_common_compile_stuff VISIBILITY)
   set(TARGET_COMPILE_FLAGS "${TARGET_COMPILE_FLAGS} ${GOOG_CXX_FLAGS}")
-  set_target_properties(${NAME} PROPERTIES
-    COMPILE_FLAGS ${TARGET_COMPILE_FLAGS})
 
   if(ARG_USES_EIGEN)
     target_include_directories("${NAME}" SYSTEM ${VISIBILITY}
       "${EIGEN3_INCLUDE_DIR}")
-    target_link_libraries("${NAME}" "${EIGEN3_LIBRARIES}")
+    target_link_libraries("${NAME}" ${EIGEN3_LIBRARIES})
   endif()
 
   
   if(ARG_USES_CERES)
     target_include_directories("${NAME}" SYSTEM ${VISIBILITY}
       "${CERES_INCLUDE_DIRS}")
-    target_link_libraries("${NAME}" "${CERES_LIBRARIES}")
+    target_link_libraries("${NAME}" ${CERES_LIBRARIES})
   endif()
 
   if(ARG_USES_LUA)
     target_include_directories("${NAME}" SYSTEM ${VISIBILITY}
       "${LUA_INCLUDE_DIR}")
-    target_link_libraries("${NAME}" "${LUA_LIBRARIES}")
+    target_link_libraries("${NAME}" ${LUA_LIBRARIES})
   endif()
 
   if(ARG_USES_BOOST)
@@ -92,12 +89,6 @@ macro(_common_compile_stuff VISIBILITY)
     add_dependencies("${NAME}" ${catkin_EXPORTED_TARGETS}
   )
   endif()  
-
-  if(ARG_USES_ZLIB)
-    target_include_directories("${NAME}" SYSTEM ${VISIBILITY}
-      "${ZLIB_INCLUDE_DIRS}")
-    target_link_libraries("${NAME}" ${ZLIB_LIBRARIES})
-  endif()
 
   if(ARG_USES_CARTOGRAPHER)
     target_include_directories("${NAME}" SYSTEM ${VISIBILITY}
@@ -176,17 +167,6 @@ function(google_combined_library NAME)
     DEPENDS ${ARG_SRCS}
   )
 
-  add_custom_command(
-    OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/${FIL_WE}.pb.cc"
-           "${CMAKE_CURRENT_BINARY_DIR}/${FIL_WE}.pb.h"
-    COMMAND  ${PROTOBUF_PROTOC_EXECUTABLE}
-    ARGS --cpp_out  ${CMAKE_BINARY_DIR} -I
-      ${CMAKE_BINARY_DIR} ${REWRITTEN_PROTO}
-    DEPENDS ${REWRITTEN_PROTO}
-    COMMENT "Running C++ protocol buffer compiler on ${FIL}"
-    VERBATIM
-  )
-
   # Just a dummy library, we will overwrite its output directly after again
   # with its POST_BUILD step.
   google_library(${NAME}
@@ -251,8 +231,7 @@ endfunction()
 macro(_common_test_stuff)
   add_executable(${NAME}
     ${ARG_SRCS} ${ARG_HDRS}
-    )
-
+  )
   _common_compile_stuff("PRIVATE")
 
   if (CMAKE_SYSTEM_NAME MATCHES "Darwin")  
@@ -287,7 +266,6 @@ endfunction()
 function(google_test NAME)
   _parse_arguments("${ARGN}")
   _common_test_stuff()
-
   add_test(${NAME} ${NAME})
 endfunction()
 
@@ -298,6 +276,7 @@ function(google_binary NAME)
   add_executable(${NAME}
     ${ARG_SRCS} ${ARG_HDRS}
   )
+  set_property(TARGET "${NAME}" PROPERTY POSITION_INDEPENDENT_CODE ON)
 
   _common_compile_stuff("PRIVATE")
 
@@ -374,7 +353,7 @@ function(google_proto_library NAME)
     "${PROTOBUF_INCLUDE_DIR}")
   # TODO(hrapp): This should not explicityly list pthread and use
   # PROTOBUF_LIBRARIES, but that failed on first try.
-  target_link_libraries("${NAME}" "${PROTOBUF_LIBRARY}" pthread)
+  target_link_libraries("${NAME}" ${PROTOBUF_LIBRARY} pthread)
 endfunction()
 
 macro(google_initialize_cartographer_project)
@@ -388,7 +367,6 @@ macro(google_initialize_cartographer_project)
     google_add_flag(GOOG_CXX_FLAGS "-Wall")
     google_add_flag(GOOG_CXX_FLAGS "-Wpedantic")
   endif()
-
 
   # Turn some warnings into errors.
   google_add_flag(GOOG_CXX_FLAGS "-Werror=format-security")
