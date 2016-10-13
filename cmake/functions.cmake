@@ -31,7 +31,12 @@ macro(_parse_arguments ARGS)
     USES_PCL
     USES_ROS
     USES_YAMLCPP
+<<<<<<< HEAD
   )
+=======
+    USES_ZLIB
+  )  
+>>>>>>> merge some changes from master
   set(ONE_VALUE_ARG )
   set(MULTI_VALUE_ARGS SRCS HDRS DEPENDS)
   cmake_parse_arguments(ARG
@@ -88,11 +93,24 @@ macro(_common_compile_stuff VISIBILITY)
     target_link_libraries("${NAME}" ${catkin_LIBRARIES})
     add_dependencies("${NAME}" ${catkin_EXPORTED_TARGETS}
   )
+<<<<<<< HEAD
+=======
+  endif()  
+
+  if(ARG_USES_ZLIB)
+    target_include_directories("${NAME}" SYSTEM ${VISIBILITY}
+      "${ZLIB_INCLUDE_DIRS}")
+    target_link_libraries("${NAME}" ${ZLIB_LIBRARIES})
+>>>>>>> merge some changes from master
   endif()
 
   if(ARG_USES_CARTOGRAPHER)
     target_include_directories("${NAME}" SYSTEM ${VISIBILITY}
       "${CARTOGRAPHER_INCLUDE_DIRS}")
+<<<<<<< HEAD
+=======
+    link_directories("${CARTOGRAPHER_LIBRARY_DIRS}")
+>>>>>>> merge some changes from master
     target_link_libraries("${NAME}" ${CARTOGRAPHER_LIBRARIES})
   endif()
 
@@ -106,12 +124,22 @@ macro(_common_compile_stuff VISIBILITY)
   endif()
 
   if(ARG_USES_YAMLCPP)
+<<<<<<< HEAD
     target_link_libraries("${NAME}" yaml-cpp)
   endif()
 
   set_target_properties(${NAME} PROPERTIES
     COMPILE_FLAGS ${TARGET_COMPILE_FLAGS})
 
+=======
+    find_library(YAML_CPP_LIBRARY yaml-cpp)    
+    target_link_libraries("${NAME}" ${YAML_CPP_LIBRARY})
+  endif()
+
+  set_target_properties(${NAME} PROPERTIES
+    COMPILE_FLAGS ${TARGET_COMPILE_FLAGS})  
+  
+>>>>>>> merge some changes from master
   # Add the binary directory first, so that port.h is included after it has
   # been generated.
   target_include_directories("${NAME}" ${VISIBILITY} "${CMAKE_BINARY_DIR}")
@@ -260,6 +288,23 @@ endfunction()
 function(google_test NAME)
   _parse_arguments("${ARGN}")
   _common_test_stuff()
+
+  _parse_arguments("${ARGN}")
+  _common_test_stuff()
+
+  # Copied from the catkin sources. Tracked in ros/catkin:#830.
+  add_dependencies(tests ${NAME})
+  get_target_property(_target_path ${NAME} RUNTIME_OUTPUT_DIRECTORY)
+  set(cmd "${_target_path}/${NAME} --gtest_output=xml:${CATKIN_TEST_RESULTS_DIR}/${PROJECT_NAME}/gtest-${NAME}.xml")
+  catkin_run_tests_target("gtest" ${NAME} "gtest-${NAME}.xml"
+    COMMAND ${cmd}
+    DEPENDENCIES ${NAME}
+    WORKING_DIRECTORY ${ARG_WORKING_DIRECTORY})
+endfunction()
+
+function(google_test NAME)
+  _parse_arguments("${ARGN}")
+  _common_test_stuff()
   add_test(${NAME} ${NAME})
 endfunction()
 
@@ -352,8 +397,13 @@ macro(google_initialize_cartographer_project)
   SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules)
   set(GOOG_CXX_FLAGS "-pthread -std=c++11 ${GOOG_CXX_FLAGS}")
 
-  google_add_flag(GOOG_CXX_FLAGS "-Wall")
-  google_add_flag(GOOG_CXX_FLAGS "-Wpedantic")
+  if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+    google_add_flag(GOOG_CXX_FLAGS "-Weverything")
+    google_add_flag(GOOG_CXX_FLAGS "-Werror=non-pod-varargs")
+  else()
+    google_add_flag(GOOG_CXX_FLAGS "-Wall")
+    google_add_flag(GOOG_CXX_FLAGS "-Wpedantic")
+  endif()
 
   # Turn some warnings into errors.
   google_add_flag(GOOG_CXX_FLAGS "-Werror=format-security")

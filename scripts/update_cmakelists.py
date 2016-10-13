@@ -21,6 +21,7 @@ import argparse
 import collections
 import os
 import re
+import argparse
 
 
 def MakeRelative(filename, directory):
@@ -166,6 +167,13 @@ def ParseArgs():
   args = p.parse_args()
   args.root = args.root.rstrip("/")
   return args
+
+
+def ParseArgs():
+  p = argparse.ArgumentParser(
+      description="Automatically update cMakeFiles using build conventions.")
+  p.add_argument("root", type=str, help="Source directory.")
+  return p.parse_args()
 
 
 def main():
