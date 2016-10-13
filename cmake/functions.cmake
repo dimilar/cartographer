@@ -31,12 +31,7 @@ macro(_parse_arguments ARGS)
     USES_PCL
     USES_ROS
     USES_YAMLCPP
-<<<<<<< HEAD
   )
-=======
-    USES_ZLIB
-  )  
->>>>>>> merge some changes from master
   set(ONE_VALUE_ARG )
   set(MULTI_VALUE_ARGS SRCS HDRS DEPENDS)
   cmake_parse_arguments(ARG
@@ -93,24 +88,11 @@ macro(_common_compile_stuff VISIBILITY)
     target_link_libraries("${NAME}" ${catkin_LIBRARIES})
     add_dependencies("${NAME}" ${catkin_EXPORTED_TARGETS}
   )
-<<<<<<< HEAD
-=======
-  endif()  
-
-  if(ARG_USES_ZLIB)
-    target_include_directories("${NAME}" SYSTEM ${VISIBILITY}
-      "${ZLIB_INCLUDE_DIRS}")
-    target_link_libraries("${NAME}" ${ZLIB_LIBRARIES})
->>>>>>> merge some changes from master
   endif()
 
   if(ARG_USES_CARTOGRAPHER)
     target_include_directories("${NAME}" SYSTEM ${VISIBILITY}
       "${CARTOGRAPHER_INCLUDE_DIRS}")
-<<<<<<< HEAD
-=======
-    link_directories("${CARTOGRAPHER_LIBRARY_DIRS}")
->>>>>>> merge some changes from master
     target_link_libraries("${NAME}" ${CARTOGRAPHER_LIBRARIES})
   endif()
 
@@ -124,14 +106,6 @@ macro(_common_compile_stuff VISIBILITY)
   endif()
 
   if(ARG_USES_YAMLCPP)
-<<<<<<< HEAD
-    target_link_libraries("${NAME}" yaml-cpp)
-  endif()
-
-  set_target_properties(${NAME} PROPERTIES
-    COMPILE_FLAGS ${TARGET_COMPILE_FLAGS})
-
-=======
     find_library(YAML_CPP_LIBRARY yaml-cpp)    
     target_link_libraries("${NAME}" ${YAML_CPP_LIBRARY})
   endif()
@@ -139,7 +113,6 @@ macro(_common_compile_stuff VISIBILITY)
   set_target_properties(${NAME} PROPERTIES
     COMPILE_FLAGS ${TARGET_COMPILE_FLAGS})  
   
->>>>>>> merge some changes from master
   # Add the binary directory first, so that port.h is included after it has
   # been generated.
   target_include_directories("${NAME}" ${VISIBILITY} "${CMAKE_BINARY_DIR}")
@@ -260,6 +233,11 @@ macro(_common_test_stuff)
     ${ARG_SRCS} ${ARG_HDRS}
   )
   _common_compile_stuff("PRIVATE")
+
+  if (CMAKE_SYSTEM_NAME MATCHES "Darwin")  
+    target_include_directories("${NAME}" SYSTEM PRIVATE
+      "${HOMEBREW_INSTALL_PREFIX}/include")
+  endif ()
 
   # Make sure that gmock always includes the correct gtest/gtest.h.
   target_include_directories("${NAME}" SYSTEM PRIVATE
