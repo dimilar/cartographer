@@ -55,8 +55,6 @@ macro(_common_compile_stuff VISIBILITY)
     target_include_directories("${NAME}" SYSTEM ${VISIBILITY}
       "${CERES_INCLUDE_DIRS}")
     target_link_libraries("${NAME}" "${CERES_LIBRARIES}")
-    find_library(OPENMP_LIBRARY omp)
-    target_link_libraries("${NAME}" ${OPENMP_LIBRARY})
   endif()
 
   if(ARG_USES_LUA)
@@ -104,7 +102,6 @@ macro(_common_compile_stuff VISIBILITY)
   if(ARG_USES_CARTOGRAPHER)
     target_include_directories("${NAME}" SYSTEM ${VISIBILITY}
       "${CARTOGRAPHER_INCLUDE_DIRS}")
-    link_directories("${CARTOGRAPHER_LIBRARY_DIRS}")
     target_link_libraries("${NAME}" ${CARTOGRAPHER_LIBRARIES})
   endif()
 
@@ -261,13 +258,12 @@ macro(_common_test_stuff)
   if (CMAKE_SYSTEM_NAME MATCHES "Darwin")  
     target_include_directories("${NAME}" SYSTEM PRIVATE
       "${HOMEBREW_INSTALL_PREFIX}/include")
-  endif ()  
+  endif ()
 
-  find_library(GMOCK_LIBRARY gmock_main)
-  find_library(GTEST_LIBRARY gtest)
-  
-  target_link_libraries("${NAME}" ${GMOCK_LIBRARY})
-  target_link_libraries("${NAME}" ${GEST_LIBRARY})
+  # Make sure that gmock always includes the correct gtest/gtest.h.
+  target_include_directories("${NAME}" SYSTEM PRIVATE
+    "${GMOCK_SRC_DIR}/gtest/include")
+  target_link_libraries("${NAME}" gmock_main)
 endmacro()
 
 function(google_catkin_test NAME)
@@ -419,5 +415,7 @@ macro(google_initialize_cartographer_project)
 endmacro()
 
 macro(google_enable_testing)
+  set(GMOCK_SRC_DIR "/usr/src/gmock" CACHE STRING "Path to google-mock sources.")
+  add_subdirectory(${GMOCK_SRC_DIR} "${CMAKE_CURRENT_BINARY_DIR}/gmock")
   enable_testing()
 endmacro()
