@@ -23,15 +23,15 @@ macro(_parse_arguments ARGS)
     USES_GLOG
     USES_LUA
     USES_WEBP
-  )
-
+    )
+  
   # Options only used by projects using Cartographers cmake files.
   list(APPEND OPTIONS
     USES_CARTOGRAPHER
     USES_PCL
     USES_ROS
     USES_YAMLCPP
-  )
+  )  
   set(ONE_VALUE_ARG )
   set(MULTI_VALUE_ARGS SRCS HDRS DEPENDS)
   cmake_parse_arguments(ARG
@@ -88,7 +88,7 @@ macro(_common_compile_stuff VISIBILITY)
     target_link_libraries("${NAME}" ${catkin_LIBRARIES})
     add_dependencies("${NAME}" ${catkin_EXPORTED_TARGETS}
   )
-  endif()
+  endif()  
 
   if(ARG_USES_CARTOGRAPHER)
     target_include_directories("${NAME}" SYSTEM ${VISIBILITY}
@@ -233,11 +233,6 @@ macro(_common_test_stuff)
     ${ARG_SRCS} ${ARG_HDRS}
   )
   _common_compile_stuff("PRIVATE")
-
-  if (CMAKE_SYSTEM_NAME MATCHES "Darwin")  
-    target_include_directories("${NAME}" SYSTEM PRIVATE
-      "${HOMEBREW_INSTALL_PREFIX}/include")
-  endif ()
 
   # Make sure that gmock always includes the correct gtest/gtest.h.
   target_include_directories("${NAME}" SYSTEM PRIVATE
