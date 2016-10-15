@@ -41,13 +41,13 @@ kalman_filter::PoseTracker* GlobalTrajectoryBuilder::pose_tracker() const {
 }
 
 void GlobalTrajectoryBuilder::AddHorizontalLaserFan(
-    const common::Time time, const sensor::LaserFan3D& laser_fan) {
+    const common::Time time, const sensor::LaserFan& laser_fan) {
   std::unique_ptr<LocalTrajectoryBuilder::InsertionResult> insertion_result =
       local_trajectory_builder_.AddHorizontalLaserFan(time, laser_fan);
   if (insertion_result != nullptr) {
     sparse_pose_graph_->AddScan(
         insertion_result->time, insertion_result->tracking_to_tracking_2d,
-        sensor::ProjectLaserFan(insertion_result->laser_fan_in_tracking_2d),
+        insertion_result->laser_fan_in_tracking_2d,
         insertion_result->pose_estimate_2d,
         kalman_filter::Project2D(insertion_result->covariance_estimate),
         insertion_result->submaps, insertion_result->matching_submap,

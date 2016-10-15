@@ -14,6 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+
 """A dumb CMakeLists.txt generator that relies on source name conventions."""
 
 from os import path
@@ -114,6 +115,8 @@ def ExtractUses(project_name, source):
       uses.add("USES_ROS")
     if re.match(r'^#include ["<]yaml-cpp/', line):
       uses.add("USES_YAMLCPP")
+    if re.match(r'^#include ["<]cairo/', line):
+      uses.add("USES_CAIRO")
     if project_name != "cartographer":
       if re.match(r'^#include ["<]cartographer/', line):
         uses.add("USES_CARTOGRAPHER")
@@ -162,10 +165,9 @@ def GetNonGoogleTargetLines(filename):
 def ParseArgs():
   p = argparse.ArgumentParser(
       description="Automatically update cMakeFiles using build conventions.")
-  p.add_argument("root", type=str, help="Source directory.")
+  p.add_argument("root", type=str, nargs="*", help="Source directory.")
 
   args = p.parse_args()
-  args.root = args.root.rstrip("/")
   return args
 
 
@@ -178,11 +180,18 @@ def ParseArgs():
 
 def main():
   args = ParseArgs()
+
+  for root in args.root:
+    RunOnDirectory(root)
+
+
+def RunOnDirectory(root):
+  root = root.rstrip("/")
   targets_by_src = {}
   targets = []
 
-  project_name = os.path.basename(args.root)
-  base_directory = path.realpath(path.join(args.root, path.pardir))
+  project_name = os.path.basename(root)
+  base_directory = path.realpath(path.join(root, path.pardir))
   directories = set()
 
   def AddTarget(target_type, name, directory, srcs, hdrs):
@@ -198,9 +207,8 @@ def main():
         targets_by_src[proto_stem + ".pb.cc"] = target
     directories.add(directory)
 
-  for (directory, sources) in FindSourceFiles(args.root):
-    module_name = path.relpath(directory,
-                               path.realpath(args.root)).replace("/", "_")
+  for (directory, sources) in FindSourceFiles(root):
+    module_name = path.relpath(directory, path.realpath(root)).replace("/", "_")
 
     prepend_module_name = lambda s: (module_name + "_" + s) if module_name != "." else s
     headers = set(fn for fn in sources if fn.endswith(".h"))
