@@ -39,8 +39,25 @@ macro(_parse_arguments ARGS)
     "${OPTIONS}" "${ONE_VALUE_ARG}" "${MULTI_VALUE_ARGS}" ${ARGS})
 endmacro(_parse_arguments)
 
+macro(_macOS_homebrew_flags)
+  if (CMAKE_SYSTEM_NAME MATCHES "Darwin")
+    find_program(HOMEBREW_EXECUTABLE brew)
+    mark_as_advanced(FORCE HOMEBREW_EXECUTABLE)
+    if (HOMEBREW_EXECUTABLE)
+      # Detected a Homebrew install, query for its install prefix.
+      execute_process(COMMAND ${HOMEBREW_EXECUTABLE} --prefix
+        OUTPUT_VARIABLE HOMEBREW_INSTALL_PREFIX
+        OUTPUT_STRIP_TRAILING_WHITESPACE)
+      set(TARGET_LINK_FLAGS "-L${HOMEBREW_INSTALL_PREFIX}/lib ${TARGET_LINK_FLAGS}")
+      set(TARGET_COMPILE_FLAGS "${TARGET_COMPILE_FLAGS} -I${HOMEBREW_INSTALL_PREFIX}/include")
+    endif()
+  endif()
+endmacro()
+
 macro(_common_compile_stuff VISIBILITY)
   set(TARGET_COMPILE_FLAGS "${TARGET_COMPILE_FLAGS} ${GOOG_CXX_FLAGS}")
+
+  _macOS_homebrew_flags()
 
   if(ARG_USES_EIGEN)
     target_include_directories("${NAME}" SYSTEM ${VISIBILITY}
@@ -48,7 +65,6 @@ macro(_common_compile_stuff VISIBILITY)
     target_link_libraries("${NAME}" ${EIGEN3_LIBRARIES})
   endif()
 
-  
   if(ARG_USES_CERES)
     target_include_directories("${NAME}" SYSTEM ${VISIBILITY}
       "${CERES_INCLUDE_DIRS}")
@@ -63,24 +79,21 @@ macro(_common_compile_stuff VISIBILITY)
 
   if(ARG_USES_BOOST)
     target_include_directories("${NAME}" SYSTEM ${VISIBILITY}
-      "${Boost_INCLUDE_DIR}")
-    target_link_libraries("${NAME}" "${Boost_LIBRARIES}")
+      "${Boost_INCLUDE_DIRS}")
+    target_link_libraries("${NAME}" ${Boost_LIBRARIES})
   endif()
 
   if(ARG_USES_WEBP)
-    find_library(WEBP_LIBRARY webp)
-    target_link_libraries("${NAME}" ${WEBP_LIBRARY})
+    target_link_libraries("${NAME}" webp)
   endif()
 
   # We rely on Ceres to find glog and gflags for us.
   if(ARG_USES_GLOG)
-    find_library(GLOG_LIBRARY glog)
-    target_link_libraries("${NAME}" ${GLOG_LIBRARY})
+    target_link_libraries("${NAME}" glog)
   endif()
 
   if(ARG_USES_GFLAGS)
-    find_library(GFLAGS_LIBRARY gflags)
-    target_link_libraries("${NAME}" ${GFLAGS_LIBRARY})
+    target_link_libraries("${NAME}" gflags)
   endif()
 
   if(ARG_USES_ROS)
@@ -89,7 +102,7 @@ macro(_common_compile_stuff VISIBILITY)
     target_link_libraries("${NAME}" ${catkin_LIBRARIES})
     add_dependencies("${NAME}" ${catkin_EXPORTED_TARGETS}
   )
-  endif()  
+  endif()
 
   if(ARG_USES_CARTOGRAPHER)
     target_include_directories("${NAME}" SYSTEM ${VISIBILITY}
@@ -107,8 +120,7 @@ macro(_common_compile_stuff VISIBILITY)
   endif()
 
   if(ARG_USES_YAMLCPP)
-    find_library(YAML_CPP_LIBRARY yaml-cpp)    
-    target_link_libraries("${NAME}" ${YAML_CPP_LIBRARY})
+    target_link_libraries("${NAME}" yaml-cpp)
   endif()
 
   if(ARG_USES_CAIRO)
@@ -116,9 +128,10 @@ macro(_common_compile_stuff VISIBILITY)
       "${CAIRO_INCLUDE_DIRS}")
     target_link_libraries("${NAME}" ${CAIRO_LIBRARIES})
   endif()
-
+  
   set_target_properties(${NAME} PROPERTIES
-    COMPILE_FLAGS ${TARGET_COMPILE_FLAGS})  
+    COMPILE_FLAGS ${TARGET_COMPILE_FLAGS}
+    LINK_FLAGS ${TARGET_LINK_FLAGS})
   
   # Add the binary directory first, so that port.h is included after it has
   # been generated.
@@ -271,9 +284,6 @@ function(google_catkin_test NAME)
 endfunction()
 
 function(google_test NAME)
-  _parse_arguments("${ARGN}")
-  _common_test_stuff()
-
   _parse_arguments("${ARGN}")
   _common_test_stuff()
 
