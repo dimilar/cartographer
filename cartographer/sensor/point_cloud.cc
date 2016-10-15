@@ -16,6 +16,8 @@
 
 #include "cartographer/sensor/point_cloud.h"
 
+#include <algorithm>
+
 #include "cartographer/sensor/proto/sensor.pb.h"
 #include "cartographer/transform/transform.h"
 

@@ -18,6 +18,8 @@
 
 #include <utility>
 #include <vector>
+#include <limits>
+#include <string>
 
 #include "gmock/gmock.h"
 

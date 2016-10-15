@@ -16,6 +16,8 @@
 
 #include "cartographer/sensor/configuration.h"
 
+#include <string>
+
 #include "Eigen/Core"
 #include "Eigen/Geometry"
 #include "cartographer/sensor/proto/configuration.pb.h"

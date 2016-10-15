@@ -16,8 +16,13 @@
 
 #include "cartographer/sensor/laser.h"
 
+#include <utility>
+#include <algorithm>
+#include <vector>
+
 #include "cartographer/sensor/proto/sensor.pb.h"
 #include "cartographer/transform/transform.h"
+
 
 namespace cartographer {
 namespace sensor {
