@@ -234,6 +234,11 @@ macro(_common_test_stuff)
   )
   _common_compile_stuff("PRIVATE")
 
+  if (CMAKE_SYSTEM_NAME MATCHES "Darwin")  
+    target_include_directories("${NAME}" SYSTEM PRIVATE
+      "${HOMEBREW_INSTALL_PREFIX}/include")
+  endif ()
+
   # Make sure that gmock always includes the correct gtest/gtest.h.
   target_include_directories("${NAME}" SYSTEM PRIVATE
     "${GMOCK_SRC_DIR}/gtest/include")
