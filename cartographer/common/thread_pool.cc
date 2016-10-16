@@ -52,10 +52,10 @@ void ThreadPool::Schedule(std::function<void()> work_item) {
 }
 
 void ThreadPool::DoWork() {
-#ifdef __linux__
-  // This changes the per-thread nice level of the current thread on Linux. We
-  // do this so that the background work done by the thread pool is not taking
-  // away CPU resources from more important foreground threads.
+#if defined(__linux__) || defined(__APPLE__)
+  // This changes the per-thread nice level of the current thread on Linux and
+  // macOS. We do this so that the background work done by the thread pool is
+  // not taking away CPU resources from more important foreground threads.
   CHECK_NE(nice(10), -1);
 #endif
   for (;;) {
