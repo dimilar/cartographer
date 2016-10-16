@@ -1,0 +1,125 @@
+#+LaTeX_CLASS: article
+#+TITLE: Cartographer 代码阅读笔记
+#+OPTIONS: ^:nil
+#+OPTIONS: toc:2
+#+AUTHOR: 朱树磊
+#+KEYWORDS: 
+#+DESCRIPTION: 
+#+EMAIL: zhu_shulei@dahuatech.com
+#+LATEX_HEADER: \def\lang{zh-CN}
+#+LATEX_HEADER: \usepackage{orgpreamble}
+#+LATEX_HEADER: \usepackage{minted}
+#+LATEX_HEADER: \usepackage{ctcjk}
+#+LATEX_HEADER: \usepackage[letterpaper,text={6.5in,9in}]{geometry}
+#+LATEX_HEADER_EXTRA: \hypersetup{linkcolor=dhmcolor,pdfstartview=FitH}
+#+LATEX_HEADER_EXTRA: \hypersetup{pdfstartpage=1,breaklinks=true,bookmarks=true}
+#+LATEX_HEADER_EXTRA: \hypersetup{pdftoolbar=true,bookmarksopenlevel=1,bookmarksopen=true}
+#+LATEX_HEADER_EXTRA: \hypersetup{pdfborder=0,colorlinks=true,urlcolor=dhmcolor,citecolor=dhmcolor}
+#+LATEX_HEADER_EXTRA: \hypersetup{pdfpagemode=UseNone,pdfauthor={朱树磊},pdftitle={Cartographer Reading Notes}}
+#+LATEX_HEADER_EXTRA: \hypersetup{pdfcreator={Emacs(V25.1) + Org-mode(V8.3.5)},pdfproducer={XeLaTeX}}
+
+
+* 概念
+- submap $M$ :: consecutive sacn is matched against a small chunk of the world.
+- scan matching :: using a non-linear optimization that aligns the scan with the submap.
+* 局部 2D SLAM
+** 扫描（Scans）
+建立扫描点 $p$ 和扫描帧（scan frame）的关系，假设扫描帧的 pose 为 $\xi$，有。
+\begin{equation}
+T_{\xi} = \underbrace{\begin{pmatrix}
+\cos \xi_{\theta} & - \sin\xi_{\theta}\\
+\sin \xi_{\theta} & \cos\xi_{\theta}
+\end{pmatrix}}_{R_{\xi}}p + \underbrace{\begin{pmatrix}
+\xi_{x}\\
+\xi_{y}\\
+\end{pmatrix}}_{T_{\xi}}
+\end{equation}
+其中 $T_{\xi}$ 为转换矩阵。
+** Submaps
+submap 实际上是一种概率网格，例如：$M: r \mathbb{Z} \times r \mathbb{Z}
+\rightarrow [p_{\mathrm{min}}, p_{\mathrm{max}}]$，这里的 $r$ 是图像扫描的分辨率，
+例如 $5 \mathrm{cm}$。
+
+#+attr_latex: :width 0.5\textwidth :options angle=0 :float figure :caption \caption{\label{fig-gridpoints}网格点及与其关联的像素}
+[[./images/grid-points.jpg]]
+
+一次扫描被添加到概率网格时，需要分别计算被 hits 的网格点集和 misses 的网格点集。hits
+的只需要计算与离被 hit 的点最近的那个网格点，miss 的网格点则需要计算与扫描线（扫
+描源和扫描电之间的光线）相交的每个像素点，还需要排除那些已经在 hit set 里的网格
+点。每个之前没有被 observed 的网格点如果在这两个集合中之一，会被分配概率
+$p_{\mathrm{hit}}$ 或 $p_{\mathrm{miss}}$；如果之前已经被 observed，则更新 odds：
+
+\begin{equation}
+\begin{aligned}
+\mathrm{odds}(p) &= \frac{p}{1-p}\\
+M_{\mathrm{new}}(x) &= \mathrm{clamp}(\mathrm{odds}^{-1}(\mathrm{odds}(M_{\mathrm{old}}(x))\cdot\mathrm{odds}(p_{\mathrm{hit}})))
+\end{aligned}
+\end{equation}
+
+#+attr_latex: :width 0.5\textwidth :options angle=0 :float figure :caption \caption{\label{fig-hits-misses}Hits and misses}
+[[./images/hits-misses.jpg]]
+
+** Ceres scan matching
+scan 被允许插入 submap 之前，需要优化 local submap 的 pose $\xi$，该优化问题为：
+\begin{equation}
+\underset{\xi}{\operatorname{argmin}}  \sum_{k=1}^K (1-M_{\mathrm{smooth}}(T_{\xi}h_k))
+\end{equation}
+
+其中， $M_{\mathrm{smooth}} : \mathbb{R}^2 \rightarrow \mathbb{R}$ 是 local
+submap 中概率 smooth 函数，在项目中使用 bicubic 插值法。
+* 闭合回路 Closing Loops
+扫描只会匹配 submap，它只包含最近的几次扫描结果，因此会慢慢累积错误。该文的使用
+Sparse Pose Adjustment 方法优化所有的 scans 和 submaps。scan 的相对 pose 会保存
+在内存中以供使用。一旦 submap 不再变化，所有的匹配的 scan 和 submap 都可以用来做
+闭合回路的优化。
+
+系统中使用一个后台运行的 scan matcher 来寻找 good match，一旦找到，对应的
+relative pose 就会被添加到 optimization problem.
+** 优化问题
+loop closure optimization 也是一个 Nonlinear least squares 问题。
+\begin{equation}
+\underset{\Xi^m,\Xi^s}{\operatorname{argmin}} \frac{1}{2}\sum_{ij}^{} \rho (E^{2}(\xi_i^m, \xi_j^s; \Sigma_{ij}, \xi_{ij}))
+\end{equation}
+
+其中， $\Xi^m = \{\xi_i^m\}_{i=1,\dots,m}$ 是 submap poses，而 $\Xi^s =
+\{\xi_j^s\}_{j=1,\dots,n}$ 是 scan poses，$\xi_{ij} 是 relative pose，$
+$\Sigma_{ij}$ 是 relative pose的协方差矩阵。residual $E$ 的计算公式为
+\begin{align}
+E^2(\xi_i^m, \xi_j^s; \Sigma_{ij}, \xi_{ij}) &= e(\xi_i^m, \xi_j^s; \Sigma_{ij})^T \Sigma^{-1}_{ij}(\xi_i^m, \xi_j^s; \Sigma_{ij})\\
+e(\xi_i^m, \xi_j^s; \Sigma_{ij}) &= \xi_{ij} - \begin{pmatrix}
+R^{-1}_{\xi_i^m}(t_{\xi_i^m} -t_{\xi_j^s})\\
+\xi_{i;\theta}^m -\xi_{j;\theta}^s
+\end{pmatrix}
+\end{align}
+其中，$\rho$ 是 loss function，比如 /Huber loss/，用于消除 SPA 中的 outliers，因
+为有时候会添加不正确的 constraints 到优化问题中。
+** BBS：Branch-and-bound scan matching
+\begin{equation}
+\xi^{\star} = \underset{\xi\in \mathcal{W}}{\operatorname{argmax}} \sum_{k=1}^K M_{\mathrm{nearest}}(T_{\xi}h_k)
+\end{equation}
+其中，$\mathcal{W}$ 是 search window，$M_{nearest}$ 相比 $M$ 需要把参数 round 到
+最近的 grid point。
+
+为了追求效率，需要小心选择 step size，如:
+\begin{align}
+d_{max} &= \underset{k=1,\dots,K}{\operatorname{max}} ||h_k||\\
+\theta  &= \arccos \left(1-\frac{r^2}{2d^2_{\mathrm{max}}}\right)
+\end{align}
+
+设 $W_x = W_y = 7m, W_{\theta} = 30^{\circ}$，则步数为：
+\begin{equation}
+w_x = \left\lceil \frac{W_{x}}{r} \right\rceil, w_y = \left\lceil \frac{W_y}{r} \right\rceil, w_\theta = \left\lceil \frac{W_\theta}{\delta_{\theta}} \right\rceil
+\end{equation}
+*** Native algorithm
+#+attr_latex: :width 0.5\textwidth :options angle=0 :float figure :caption \caption{\label{fig-bbs1} Native algorithm for BBS}
+[[./images/bbs1.jpg]]
+*** Algorithm 2
+用 tree 表示所有概率集合：
+1. root node 代表所有可能的解 $\mathcal{W}$；
+2. children of each node 从属于他们的父节点，一起表示一个概率集合；
+3. leaf node 代表一个可能的解。
+
+只要内部节点 $c$ 的 /score(c)/ 变成 upper bound on the score of its elements. 不
+可能再在子树上找到更好的解了。
+**** Node selection
+系统使用深度优先算法（DFS）
