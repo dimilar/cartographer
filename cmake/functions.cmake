@@ -130,8 +130,8 @@ macro(_common_compile_stuff VISIBILITY)
   endif()
   
   set_target_properties(${NAME} PROPERTIES
-    COMPILE_FLAGS ${TARGET_COMPILE_FLAGS}
-    LINK_FLAGS ${TARGET_LINK_FLAGS})
+    COMPILE_FLAGS "${TARGET_COMPILE_FLAGS}"
+    LINK_FLAGS "${TARGET_LINK_FLAGS}")
   
   # Add the binary directory first, so that port.h is included after it has
   # been generated.
