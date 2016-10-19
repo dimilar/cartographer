@@ -123,3 +123,26 @@ w_x = \left\lceil \frac{W_{x}}{r} \right\rceil, w_y = \left\lceil \frac{W_y}{r} 
 可能再在子树上找到更好的解了。
 **** Node selection
 系统使用深度优先算法（DFS）
+* 代码
+** Node
+*** 语法
+1. GUARD_BY [fn:1]
+
+   Clang Thread Safety Analysis is a C++ language extension which warns about
+   potential race conditions in code. The analysis is completely static (i.e.
+   compile-time); there is no run-time overhead. The analysis is still under active
+   development, but it is mature enough to be deployed in an industrial setting. It
+   is being developed by Google, in collaboration with CERT/SEI, and is used
+   extensively in Google’s internal code base.
+
+   Thread safety analysis works very much like a type system for multi-threaded
+   programs. In addition to declaring the type of data (e.g. int, float, etc.), the
+   programmer can (optionally) declare how access to that data is controlled in a
+   multi-threaded environment. For example, if foo is guarded by the mutex mu, then
+   the analysis will issue a warning whenever a piece of code reads or writes to
+   foo without first locking mu. Similarly, if there are particular routines that
+   should only be called by the GUI thread, then the analysis will warn if other
+   threads call those routines.
+2. 
+[fn:1] http://clang.llvm.org/docs/ThreadSafetyAnalysis.html
+

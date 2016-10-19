@@ -17,6 +17,7 @@
 #include "cartographer/sensor/collator.h"
 
 #include <memory>
+#include <array>
 
 #include "cartographer/common/lua_parameter_dictionary_test_helpers.h"
 #include "cartographer/common/make_unique.h"
