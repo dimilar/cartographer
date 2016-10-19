@@ -4,6 +4,16 @@ google_library(io_cairo_types
     cairo_types.h
 )
 
+google_library(io_min_max_range_filtering_points_processor
+  SRCS
+    min_max_range_filtering_points_processor.cc
+  HDRS
+    min_max_range_filtering_points_processor.h
+  DEPENDS
+    io_points_batch
+    io_points_processor
+)
+
 google_library(io_null_points_processor
   HDRS
     null_points_processor.h
@@ -11,8 +21,20 @@ google_library(io_null_points_processor
     io_points_processor
 )
 
+google_library(io_ply_writing_points_processor
+  USES_GLOG
+  SRCS
+    ply_writing_points_processor.cc
+  HDRS
+    ply_writing_points_processor.h
+  DEPENDS
+    io_points_processor
+)
+
 google_library(io_points_batch
   USES_EIGEN
+  SRCS
+    points_batch.cc
   HDRS
     points_batch.h
   DEPENDS

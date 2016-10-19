@@ -14,22 +14,20 @@
  * limitations under the License.
  */
 
-#include "cartographer/mapping/global_trajectory_builder_interface.h"
+#include "cartographer/io/points_batch.h"
 
 namespace cartographer {
-namespace mapping {
+namespace io {
 
-GlobalTrajectoryBuilderInterface::PoseEstimate::PoseEstimate(
-    const common::Time time, const kalman_filter::PoseAndCovariance& prediction,
-    const kalman_filter::PoseAndCovariance& observation,
-    const kalman_filter::PoseAndCovariance& estimate,
-    const transform::Rigid3d& pose, const sensor::PointCloud& point_cloud)
-    : time(time),
-      prediction(prediction),
-      observation(observation),
-      estimate(estimate),
-      pose(pose),
-      point_cloud(point_cloud) {}
+void RemovePoints(std::vector<int> to_remove, PointsBatch* batch) {
+  std::sort(to_remove.begin(), to_remove.end(), std::greater<int>());
+  for (const int index : to_remove) {
+    batch->points.erase(batch->points.begin() + index);
+    if (!batch->colors.empty()) {
+      batch->colors.erase(batch->colors.begin() + index);
+    }
+  }
+}
 
-}  // namespace mapping
+}  // namespace io
 }  // namespace cartographer

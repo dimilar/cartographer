@@ -14,25 +14,33 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_IO_NULL_POINTS_PROCESSOR_H_
-#define CARTOGRAPHER_IO_NULL_POINTS_PROCESSOR_H_
+#include <fstream>
 
 #include "cartographer/io/points_processor.h"
 
 namespace cartographer {
 namespace io {
 
-// A points processor that just drops all points. The end of a pipeline usually.
-class NullPointsProcessor : public PointsProcessor {
+// Streams a PLY file to disk. The header is written in 'Flush'.
+class PlyWritingPointsProcessor : public PointsProcessor {
  public:
-  NullPointsProcessor() {}
-  ~NullPointsProcessor() override {}
+  PlyWritingPointsProcessor(const string& filename, PointsProcessor* next);
+  ~PlyWritingPointsProcessor() override {}
 
-  void Process(std::unique_ptr<PointsBatch> points_batch) override {}
-  FlushResult Flush() override { return FlushResult::kFinished; }
+  PlyWritingPointsProcessor(const PlyWritingPointsProcessor&) = delete;
+  PlyWritingPointsProcessor& operator=(const PlyWritingPointsProcessor&) =
+      delete;
+
+  void Process(std::unique_ptr<PointsBatch> batch) override;
+  FlushResult Flush() override;
+
+ private:
+  PointsProcessor* const next_;
+
+  int64 num_points_;
+  bool has_colors_;
+  std::ofstream file_;
 };
 
 }  // namespace io
 }  // namespace cartographer
-
-#endif  // CARTOGRAPHER_IO_NULL_POINTS_PROCESSOR_H_
