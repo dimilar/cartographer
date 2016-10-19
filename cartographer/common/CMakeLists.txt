@@ -124,15 +124,6 @@ google_library(common_mutex
     common_time
 )
 
-google_library(common_ordered_multi_queue
-  HDRS
-    ordered_multi_queue.h
-  DEPENDS
-    common_blocking_queue
-    common_make_unique
-    common_port
-)
-
 google_library(common_port
   USES_BOOST
   HDRS
@@ -197,14 +188,6 @@ google_test(common_math_test
     math_test.cc
   DEPENDS
     common_math
-)
-
-google_test(common_ordered_multi_queue_test
-  SRCS
-    ordered_multi_queue_test.cc
-  DEPENDS
-    common_make_unique
-    common_ordered_multi_queue
 )
 
 google_test(common_rate_timer_test
