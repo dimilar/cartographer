@@ -25,7 +25,6 @@ google_library(mapping_collated_trajectory_builder
     common_port
     common_rate_timer
     common_time
-    kalman_filter_pose_tracker
     mapping_global_trajectory_builder_interface
     mapping_submaps
     mapping_trajectory_builder
@@ -171,12 +170,16 @@ google_library(mapping_trajectory_connectivity
 
 google_library(mapping_trajectory_node
   USES_EIGEN
+  SRCS
+    trajectory_node.cc
   HDRS
     trajectory_node.h
   DEPENDS
     common_time
+    proto_trajectory
     sensor_laser
     transform_rigid_transform
+    transform_transform
 )
 
 google_test(mapping_probability_values_test

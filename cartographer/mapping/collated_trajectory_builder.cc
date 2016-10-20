@@ -50,14 +50,6 @@ const Submaps* CollatedTrajectoryBuilder::submaps() const {
   return wrapped_trajectory_builder_->submaps();
 }
 
-Submaps* CollatedTrajectoryBuilder::submaps() {
-  return wrapped_trajectory_builder_->submaps();
-}
-
-kalman_filter::PoseTracker* CollatedTrajectoryBuilder::pose_tracker() const {
-  return wrapped_trajectory_builder_->pose_tracker();
-}
-
 const TrajectoryBuilder::PoseEstimate&
 CollatedTrajectoryBuilder::pose_estimate() const {
   return wrapped_trajectory_builder_->pose_estimate();
