@@ -19,6 +19,7 @@
 
 #include <cstdint>
 #include <vector>
+#include <array>
 
 #include "Eigen/Core"
 #include "cartographer/common/time.h"
