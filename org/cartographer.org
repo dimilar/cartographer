@@ -146,3 +146,11 @@ w_x = \left\lceil \frac{W_{x}}{r} \right\rceil, w_y = \left\lceil \frac{W_y}{r} 
 2. 
 [fn:1] http://clang.llvm.org/docs/ThreadSafetyAnalysis.html
 
+
+* Debug
+#+BEGIN_SRC sh
+/opt/ros/jade/lib/cartographer_ros/cartographer_node -configuration_directory /opt/ros/jade/share/cartographer_ros/configuration_files -configuration_basename revo_lds.lua scan:=horizontal_laser_2d __name:=cartographer_node __log:=/home/zhus/.ros/log/821b77fa-9991-11e6-a00b-0cc47ab359ee/cartographer_node-1.log
+/opt/ros/jade/lib/rviz/rviz -d /opt/ros/jade/share/cartographer_ros/configuration_files/demo_2d.rviz __name:=rviz __log:=/home/zhus/.ros/log/821b77fa-9991-11e6-a00b-0cc47ab359ee/rviz-2.log
+/usr/bin/python /opt/ros/jade/bin/roslaunch cartographer_ros demo_revo_lds.launch bag_filename:=/ucla/personal/Dropbox/programming/ros/bagfiles/deutchesmuseum/cartographer_paper_revo_lds.bag
+/opt/ros/jade/lib/rosbag/play --clock /ucla/personal/Dropbox/programming/ros/bagfiles/deutchesmuseum/cartographer_paper_revo_lds.bag __name:=playbag __log:=/home/zhus/.ros/log/821b77fa-9991-11e6-a00b-0cc47ab359ee/playbag-3.log
+#+END_SRC
