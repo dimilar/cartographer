@@ -76,6 +76,7 @@ google_library(mapping_map_builder
     mapping_3d_sparse_pose_graph
     mapping_collated_trajectory_builder
     mapping_proto_map_builder_options
+    mapping_proto_submap_visualization
     mapping_sparse_pose_graph
     mapping_submaps
     mapping_trajectory_builder
@@ -116,13 +117,16 @@ google_library(mapping_sparse_pose_graph
     sparse_pose_graph.h
   DEPENDS
     common_lua_parameter_dictionary
+    kalman_filter_pose_tracker
     mapping_proto_scan_matching_progress
+    mapping_proto_sparse_pose_graph
     mapping_proto_sparse_pose_graph_options
     mapping_sparse_pose_graph_constraint_builder
     mapping_sparse_pose_graph_optimization_problem_options
     mapping_submaps
     mapping_trajectory_node
     transform_rigid_transform
+    transform_transform
 )
 
 google_library(mapping_submaps
@@ -137,7 +141,7 @@ google_library(mapping_submaps
     common_port
     mapping_2d_probability_grid
     mapping_probability_values
-    mapping_proto_submaps
+    mapping_proto_submap_visualization
     mapping_trajectory_node
     transform_transform
 )
@@ -176,7 +180,7 @@ google_library(mapping_trajectory_node
     trajectory_node.h
   DEPENDS
     common_time
-    proto_trajectory
+    mapping_proto_trajectory
     sensor_laser
     transform_rigid_transform
     transform_transform

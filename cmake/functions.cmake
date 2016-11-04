@@ -205,17 +205,16 @@ function(google_combined_library NAME)
     # TODO(hrapp): this is probably not very portable, but should work fine on
     # Linux.
     set(AR_SCRIPT "")
-    set(AR_SCRIPT "CREATE ${OUTPUT_FILE}\n")
+    set(AR_SCRIPT "CREATE $<TARGET_FILE:${NAME}>\n")
     foreach(SRC ${ARG_SRCS})
-      get_property(STATIC_LIBRARY_FILE TARGET ${SRC} PROPERTY LOCATION)
-      set(AR_SCRIPT "${AR_SCRIPT}ADDLIB ${STATIC_LIBRARY_FILE}\n")
+      set(AR_SCRIPT "${AR_SCRIPT}ADDLIB $<TARGET_FILE:${SRC}>\n")
     endforeach()
     set(AR_SCRIPT "${AR_SCRIPT}SAVE\nEND\n")
     set(AR_SCRIPT_FILE "${CMAKE_CURRENT_BINARY_DIR}/${NAME}_ar.script")
-    file(WRITE ${AR_SCRIPT_FILE} ${AR_SCRIPT})
+    file(GENERATE OUTPUT ${AR_SCRIPT_FILE} CONTENT ${AR_SCRIPT})
 
     add_custom_command(TARGET ${NAME} POST_BUILD
-      COMMAND rm ${OUTPUT_FILE}
+      COMMAND rm $<TARGET_FILE:${NAME}>
       COMMAND ${CMAKE_AR}
       ARGS -M < ${AR_SCRIPT_FILE}
       COMMENT "Recombining static libraries into ${NAME}."
@@ -263,8 +262,8 @@ macro(_common_test_stuff)
 
   # Make sure that gmock always includes the correct gtest/gtest.h.
   target_include_directories("${NAME}" SYSTEM PRIVATE
-    "${GMOCK_SRC_DIR}/gtest/include")
-  target_link_libraries("${NAME}" gmock_main)
+    "${GMOCK_INCLUDE_DIRS}")
+  target_link_libraries("${NAME}" ${GMOCK_LIBRARIES})
 endmacro()
 
 function(google_catkin_test NAME)
@@ -391,7 +390,13 @@ function(google_proto_library NAME)
 endfunction()
 
 macro(google_initialize_cartographer_project)
-  SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules)
+  if(CARTOGRAPHER_CMAKE_DIR)
+    set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}
+        ${CARTOGRAPHER_CMAKE_DIR}/modules)
+  else()
+    set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}
+        ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules)
+  endif()
   set(GOOG_CXX_FLAGS "-pthread -std=c++11 ${GOOG_CXX_FLAGS}")
 
   if("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
@@ -428,7 +433,6 @@ macro(google_initialize_cartographer_project)
 endmacro()
 
 macro(google_enable_testing)
-  set(GMOCK_SRC_DIR "/usr/src/gmock" CACHE STRING "Path to google-mock sources.")
-  add_subdirectory(${GMOCK_SRC_DIR} "${CMAKE_CURRENT_BINARY_DIR}/gmock")
   enable_testing()
+  find_package(GMock REQUIRED)
 endmacro()

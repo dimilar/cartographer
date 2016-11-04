@@ -29,7 +29,6 @@
 #include "cartographer/common/time.h"
 #include "cartographer/sensor/data.h"
 #include "cartographer/sensor/ordered_multi_queue.h"
-#include "cartographer/sensor/sensor_packet_period_histogram_builder.h"
 #include "glog/logging.h"
 
 namespace cartographer {
@@ -71,27 +70,12 @@ class Collator {
   // order.
   void AddSensorData(const int trajectory_id, const string& sensor_id,
                      std::unique_ptr<Data> data) {
-    sensor_packet_period_histogram_builder_.Add(
-        trajectory_id, common::ToUniversal(data->time), sensor_id);
     queue_.Add(QueueKey{trajectory_id, sensor_id}, std::move(data));
   }
 
   // Dispatches all queued sensor packets. May only be called once.
   // AddSensorData may not be called after Flush.
-  void Flush() {
-    queue_.Flush();
-    sensor_packet_period_histogram_builder_.LogHistogramsAndClear();
-  }
-
-  // Returns the number of packets associated with 'trajectory_id' that are
-  // available for processing.
-  int num_available_packets(const int trajectory_id) {
-    int num = std::numeric_limits<int>::max();
-    for (const auto& queue_key : queue_keys_[trajectory_id]) {
-      num = std::min(num, queue_.num_available(queue_key));
-    }
-    return num;
-  }
+  void Flush() { queue_.Flush(); }
 
  private:
   // Queue keys are a pair of trajectory ID and sensor identifier.
@@ -99,7 +83,6 @@ class Collator {
 
   // Map of trajectory ID to all associated QueueKeys.
   std::unordered_map<int, std::vector<QueueKey>> queue_keys_;
-  SensorPacketPeriodHistogramBuilder sensor_packet_period_histogram_builder_;
 };
 
 }  // namespace sensor

@@ -20,6 +20,8 @@
 #include <algorithm>
 #include <map>
 #include <memory>
+#include <set>
+#include <sstream>
 
 #include "cartographer/common/blocking_queue.h"
 #include "cartographer/common/make_unique.h"
@@ -48,15 +50,21 @@ inline std::ostream& operator<<(std::ostream& out, const QueueKey& key) {
 }
 
 // Maintains multiple queues of sorted sensor data and dispatches it in merge
-// sorted order. This class is thread-compatible.
+// sorted order. It will wait to see at least one value for each unfinished
+// queue before dispatching the next time ordered value across all queues.
+//
+// This class is thread-compatible.
 class OrderedMultiQueue {
  public:
   using Callback = std::function<void(std::unique_ptr<Data>)>;
 
-  // Will wait to see at least one value for each unfinished queue before
-  // dispatching the next smallest value across all queues.
   OrderedMultiQueue() {}
-  ~OrderedMultiQueue() {}
+
+  ~OrderedMultiQueue() {
+    for (auto& entry : queues_) {
+      CHECK(entry.second.finished);
+    }
+  }
 
   void AddQueue(const QueueKey& queue_key, Callback callback) {
     CHECK(FindOrNull(queue_key) == nullptr);
@@ -97,11 +105,6 @@ class OrderedMultiQueue {
     for (auto& unfinished_queue : unfinished_queues) {
       MarkQueueAsFinished(unfinished_queue);
     }
-  }
-
-  // Returns the number of available values associated with 'queue_key'.
-  int num_available(const QueueKey& queue_key) {
-    return FindOrDie(queue_key).queue.Size();
   }
 
  private:
@@ -164,9 +167,22 @@ class OrderedMultiQueue {
   // Called when not all necessary queues are filled to dispatch messages.
   void CannotMakeProgress() {
     for (auto& entry : queues_) {
-      LOG_IF_EVERY_N(WARNING, entry.second.queue.Size() > kMaxQueueSize, 60)
-          << "Queue " << entry.first << " exceeds maximum size.";
+      if (entry.second.queue.Size() > kMaxQueueSize) {
+        LOG_EVERY_N(WARNING, 60) << "Queues waiting for data: "
+                                 << EmptyQueuesDebugString();
+        return;
+      }
     }
+  }
+
+  string EmptyQueuesDebugString() {
+    std::ostringstream empty_queues;
+    for (auto& entry : queues_) {
+      if (entry.second.queue.Size() == 0) {
+        empty_queues << (empty_queues.tellp() > 0 ? ", " : "") << entry.first;
+      }
+    }
+    return empty_queues.str();
   }
 
   // Used to verify that values are dispatched in sorted order.

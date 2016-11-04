@@ -4,12 +4,40 @@ google_library(io_cairo_types
     cairo_types.h
 )
 
+google_library(io_counting_points_processor
+  USES_GLOG
+  SRCS
+    counting_points_processor.cc
+  HDRS
+    counting_points_processor.h
+  DEPENDS
+    common_lua_parameter_dictionary
+    common_make_unique
+    io_points_processor
+)
+
+google_library(io_fixed_ratio_sampling_points_processor
+  USES_EIGEN
+  USES_GLOG
+  SRCS
+    fixed_ratio_sampling_points_processor.cc
+  HDRS
+    fixed_ratio_sampling_points_processor.h
+  DEPENDS
+    common_fixed_ratio_sampler
+    common_lua_parameter_dictionary
+    common_make_unique
+    io_points_processor
+)
+
 google_library(io_min_max_range_filtering_points_processor
   SRCS
     min_max_range_filtering_points_processor.cc
   HDRS
     min_max_range_filtering_points_processor.h
   DEPENDS
+    common_lua_parameter_dictionary
+    common_make_unique
     io_points_batch
     io_points_processor
 )
@@ -21,6 +49,32 @@ google_library(io_null_points_processor
     io_points_processor
 )
 
+google_library(io_outlier_removing_points_processor
+  USES_GLOG
+  SRCS
+    outlier_removing_points_processor.cc
+  HDRS
+    outlier_removing_points_processor.h
+  DEPENDS
+    common_lua_parameter_dictionary
+    common_make_unique
+    io_points_processor
+    mapping_3d_hybrid_grid
+)
+
+google_library(io_pcd_writing_points_processor
+  USES_GLOG
+  SRCS
+    pcd_writing_points_processor.cc
+  HDRS
+    pcd_writing_points_processor.h
+  DEPENDS
+    common_lua_parameter_dictionary
+    common_make_unique
+    io_points_batch
+    io_points_processor
+)
+
 google_library(io_ply_writing_points_processor
   USES_GLOG
   SRCS
@@ -28,6 +82,9 @@ google_library(io_ply_writing_points_processor
   HDRS
     ply_writing_points_processor.h
   DEPENDS
+    common_lua_parameter_dictionary
+    common_make_unique
+    io_points_batch
     io_points_processor
 )
 
@@ -48,6 +105,26 @@ google_library(io_points_processor
     io_points_batch
 )
 
+google_library(io_points_processor_pipeline_builder
+  SRCS
+    points_processor_pipeline_builder.cc
+  HDRS
+    points_processor_pipeline_builder.h
+  DEPENDS
+    common_lua_parameter_dictionary
+    common_make_unique
+    io_counting_points_processor
+    io_fixed_ratio_sampling_points_processor
+    io_min_max_range_filtering_points_processor
+    io_null_points_processor
+    io_outlier_removing_points_processor
+    io_pcd_writing_points_processor
+    io_ply_writing_points_processor
+    io_points_processor
+    io_xray_points_processor
+    io_xyz_writing_points_processor
+)
+
 google_library(io_xray_points_processor
   USES_CAIRO
   USES_EIGEN
@@ -56,6 +133,8 @@ google_library(io_xray_points_processor
   HDRS
     xray_points_processor.h
   DEPENDS
+    common_lua_parameter_dictionary
+    common_make_unique
     common_math
     io_cairo_types
     io_points_processor
@@ -70,5 +149,7 @@ google_library(io_xyz_writing_points_processor
   HDRS
     xyz_writing_points_processor.h
   DEPENDS
+    common_lua_parameter_dictionary
+    common_make_unique
     io_points_processor
 )

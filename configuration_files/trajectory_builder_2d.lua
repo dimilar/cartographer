@@ -14,9 +14,9 @@
 
 TRAJECTORY_BUILDER_2D = {
   use_imu_data = true,
-  horizontal_laser_min_z = -0.8,
-  horizontal_laser_max_z = 2.,
-  horizontal_laser_voxel_filter_size = 0.025,
+  laser_min_z = -0.8,
+  laser_max_z = 2.,
+  laser_voxel_filter_size = 0.025,
 
   use_online_correlative_scan_matching = false,
   adaptive_voxel_filter = {
@@ -33,9 +33,9 @@ TRAJECTORY_BUILDER_2D = {
   },
 
   ceres_scan_matcher = {
-    occupied_space_cost_functor_weight = 20.,
-    previous_pose_translation_delta_cost_functor_weight = 1.,
-    initial_pose_estimate_rotation_delta_cost_functor_weight = 1e2,
+    occupied_space_weight = 20.,
+    translation_weight = 1.,
+    rotation_weight = 1e2,
     covariance_scale = 2.34e-4,
     ceres_solver_options = {
       use_nonmonotonic_steps = true,

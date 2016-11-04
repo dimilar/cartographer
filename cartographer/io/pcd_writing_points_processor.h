@@ -14,10 +14,7 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_IO_MIN_MAX_RANGE_FILTERING_POINTS_PROCESSOR_H_
-#define CARTOGRAPHER_IO_MIN_MAX_RANGE_FILTERING_POINTS_PROCESSOR_H_
-
-#include <memory>
+#include <fstream>
 
 #include "cartographer/common/lua_parameter_dictionary.h"
 #include "cartographer/io/points_processor.h"
@@ -25,34 +22,31 @@
 namespace cartographer {
 namespace io {
 
-// Filters all points that are farther away from their 'origin' as 'max_range'
-// or closer than 'min_range'.
-class MinMaxRangeFiteringPointsProcessor : public PointsProcessor {
+// Streams a PCD file to disk. The header is written in 'Flush'.
+class PcdWritingPointsProcessor : public PointsProcessor {
  public:
-  constexpr static const char* kConfigurationFileActionName =
-      "min_max_range_filter";
-  MinMaxRangeFiteringPointsProcessor(double min_range, double max_range,
-                                     PointsProcessor* next);
-  static std::unique_ptr<MinMaxRangeFiteringPointsProcessor> FromDictionary(
+  constexpr static const char* kConfigurationFileActionName = "write_pcd";
+  PcdWritingPointsProcessor(const string& filename, PointsProcessor* next);
+
+  static std::unique_ptr<PcdWritingPointsProcessor> FromDictionary(
       common::LuaParameterDictionary* dictionary, PointsProcessor* next);
 
-  ~MinMaxRangeFiteringPointsProcessor() override {}
+  ~PcdWritingPointsProcessor() override {}
 
-  MinMaxRangeFiteringPointsProcessor(
-      const MinMaxRangeFiteringPointsProcessor&) = delete;
-  MinMaxRangeFiteringPointsProcessor& operator=(
-      const MinMaxRangeFiteringPointsProcessor&) = delete;
+  PcdWritingPointsProcessor(const PcdWritingPointsProcessor&) = delete;
+  PcdWritingPointsProcessor& operator=(const PcdWritingPointsProcessor&) =
+      delete;
 
   void Process(std::unique_ptr<PointsBatch> batch) override;
   FlushResult Flush() override;
 
  private:
-  const double min_range_;
-  const double max_range_;
   PointsProcessor* const next_;
+
+  int64 num_points_;
+  bool has_colors_;
+  std::ofstream file_;
 };
 
 }  // namespace io
 }  // namespace cartographer
-
-#endif  // CARTOGRAPHER_IO_MIN_MAX_RANGE_FILTERING_POINTS_PROCESSOR_H_
