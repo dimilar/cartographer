@@ -30,9 +30,9 @@
 #include "Eigen/Eigenvalues"
 #include "cartographer/common/make_unique.h"
 #include "cartographer/common/math.h"
-#include "cartographer/common/mutex.h"
 #include "cartographer/mapping/proto/scan_matching_progress.pb.h"
 #include "cartographer/mapping/sparse_pose_graph/proto/constraint_builder_options.pb.h"
+#include "cartographer/sensor/compressed_point_cloud.h"
 #include "cartographer/sensor/voxel_filter.h"
 #include "glog/logging.h"
 
@@ -176,7 +176,7 @@ void SparsePoseGraph::ComputeConstraintsForScan(
       submap_transforms_[matching_index] *
       matching_submap->local_pose().inverse() * pose;
   CHECK_EQ(scan_index, optimization_problem_.node_data().size());
-  optimization_problem_.AddTrajectoryNode(time, pose, optimized_pose);
+  optimization_problem_.AddTrajectoryNode(time, optimized_pose);
   for (const Submap* submap : insertion_submaps) {
     const int submap_index = GetSubmapIndex(submap);
     CHECK(!submap_states_[submap_index].finished);
@@ -184,14 +184,14 @@ void SparsePoseGraph::ComputeConstraintsForScan(
     // Unchanged covariance as (submap <- map) is a translation.
     const transform::Rigid3d constraint_transform =
         submap->local_pose().inverse() * pose;
-    constraints_.push_back(Constraint3D{
-        submap_index,
-        scan_index,
-        {constraint_transform,
-         common::ComputeSpdMatrixSqrtInverse(
-             covariance, options_.constraint_builder_options()
-                             .lower_covariance_eigenvalue_bound())},
-        Constraint3D::INTRA_SUBMAP});
+    constraints_.push_back(
+        Constraint{submap_index,
+                   scan_index,
+                   {constraint_transform,
+                    common::ComputeSpdMatrixSqrtInverse(
+                        covariance, options_.constraint_builder_options()
+                                        .lower_covariance_eigenvalue_bound())},
+                   Constraint::INTRA_SUBMAP});
   }
 
   // Determine if this scan should be globally localized.
@@ -247,7 +247,7 @@ void SparsePoseGraph::ComputeConstraintsForScan(
     run_loop_closure_ = true;
     // If there is a 'scan_queue_' already, some other thread will take care.
     if (scan_queue_ == nullptr) {
-      scan_queue_.reset(new std::deque<std::function<void()>>);
+      scan_queue_ = common::make_unique<std::deque<std::function<void()>>>();
       HandleScanQueue();
     }
   }
@@ -311,6 +311,10 @@ void SparsePoseGraph::RunFinalOptimization() {
   optimization_problem_.SetMaxNumIterations(
       options_.max_num_final_iterations());
   RunOptimization();
+  optimization_problem_.SetMaxNumIterations(
+      options_.optimization_problem_options()
+          .ceres_solver_options()
+          .max_num_iterations());
 }
 
 void SparsePoseGraph::RunOptimization() {
@@ -334,8 +338,7 @@ void SparsePoseGraph::RunOptimization() {
     const auto& node_data = optimization_problem_.node_data();
     const size_t num_optimized_poses = node_data.size();
     for (size_t i = 0; i != num_optimized_poses; ++i) {
-      trajectory_nodes_[i].pose =
-          transform::Rigid3d(node_data[i].point_cloud_pose);
+      trajectory_nodes_[i].pose = node_data[i].point_cloud_pose;
     }
     // Extrapolate all point cloud poses that were added later.
     std::unordered_map<const mapping::Submaps*, transform::Rigid3d>
@@ -389,11 +392,7 @@ std::vector<mapping::TrajectoryNode> SparsePoseGraph::GetTrajectoryNodes() {
   return trajectory_nodes_;
 }
 
-std::vector<SparsePoseGraph::Constraint2D> SparsePoseGraph::constraints_2d() {
-  return {};
-}
-
-std::vector<SparsePoseGraph::Constraint3D> SparsePoseGraph::constraints_3d() {
+std::vector<SparsePoseGraph::Constraint> SparsePoseGraph::constraints() {
   return constraints_;
 }
 

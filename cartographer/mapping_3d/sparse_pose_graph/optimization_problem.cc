@@ -84,10 +84,8 @@ void OptimizationProblem::AddImuData(common::Time time,
 }
 
 void OptimizationProblem::AddTrajectoryNode(
-    common::Time time, const transform::Rigid3d& initial_point_cloud_pose,
-    const transform::Rigid3d& point_cloud_pose) {
-  node_data_.push_back(
-      NodeData{time, initial_point_cloud_pose, point_cloud_pose});
+    common::Time time, const transform::Rigid3d& point_cloud_pose) {
+  node_data_.push_back(NodeData{time, point_cloud_pose});
 }
 
 void OptimizationProblem::SetMaxNumIterations(const int32 max_num_iterations) {
@@ -187,7 +185,7 @@ void OptimizationProblem::Solve(
       problem.AddResidualBlock(
           new ceres::AutoDiffCostFunction<AccelerationCostFunction, 3, 4, 3, 3,
                                           3, 1>(new AccelerationCostFunction(
-              options_.acceleration_scale(), delta_velocity,
+              options_.acceleration_weight(), delta_velocity,
               common::ToSeconds(first_delta_time),
               common::ToSeconds(second_delta_time))),
           nullptr, C_point_clouds[j].rotation(),
@@ -196,7 +194,7 @@ void OptimizationProblem::Solve(
     }
     problem.AddResidualBlock(
         new ceres::AutoDiffCostFunction<RotationCostFunction, 3, 4, 4>(
-            new RotationCostFunction(options_.rotation_scale(),
+            new RotationCostFunction(options_.rotation_weight(),
                                      result.delta_rotation)),
         nullptr, C_point_clouds[j - 1].rotation(),
         C_point_clouds[j].rotation());

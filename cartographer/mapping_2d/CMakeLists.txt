@@ -118,6 +118,7 @@ google_library(mapping_2d_sparse_pose_graph
     common_fixed_ratio_sampler
     common_make_unique
     common_math
+    common_mutex
     common_thread_pool
     common_time
     kalman_filter_pose_tracker
@@ -131,6 +132,7 @@ google_library(mapping_2d_sparse_pose_graph
     sensor_compressed_point_cloud
     sensor_point_cloud
     sensor_voxel_filter
+    transform_rigid_transform
     transform_transform
 )
 
@@ -150,7 +152,7 @@ google_library(mapping_2d_submaps
     mapping_2d_map_limits
     mapping_2d_probability_grid
     mapping_2d_proto_submaps_options
-    mapping_proto_submaps
+    mapping_proto_submap_visualization
     mapping_submaps
     mapping_trajectory_node
     sensor_laser

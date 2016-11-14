@@ -24,9 +24,9 @@
 
 #include "Eigen/Core"
 #include "Eigen/Geometry"
-#include "cartographer/common/lua_parameter_dictionary.h"
 #include "cartographer/common/port.h"
 #include "cartographer/common/time.h"
+#include "cartographer/mapping/sparse_pose_graph.h"
 #include "cartographer/mapping/sparse_pose_graph/proto/optimization_problem_options.pb.h"
 #include "cartographer/mapping_3d/imu_integration.h"
 #include "cartographer/mapping_3d/submaps.h"
@@ -37,14 +37,13 @@ namespace sparse_pose_graph {
 
 struct NodeData {
   common::Time time;
-  transform::Rigid3d initial_point_cloud_pose;
   transform::Rigid3d point_cloud_pose;
 };
 
 // Implements the SPA loop closure method.
 class OptimizationProblem {
  public:
-  using Constraint = mapping::SparsePoseGraph::Constraint3D;
+  using Constraint = mapping::SparsePoseGraph::Constraint;
 
   explicit OptimizationProblem(
       const mapping::sparse_pose_graph::proto::OptimizationProblemOptions&
@@ -57,7 +56,6 @@ class OptimizationProblem {
   void AddImuData(common::Time time, const Eigen::Vector3d& linear_acceleration,
                   const Eigen::Vector3d& angular_velocity);
   void AddTrajectoryNode(common::Time time,
-                         const transform::Rigid3d& initial_point_cloud_pose,
                          const transform::Rigid3d& point_cloud_pose);
 
   void SetMaxNumIterations(int32 max_num_iterations);

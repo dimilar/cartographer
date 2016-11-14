@@ -14,7 +14,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """A dumb CMakeLists.txt generator that relies on source name conventions."""
 
 from os import path
@@ -239,8 +238,8 @@ def RunOnDirectory(root):
     for c in sorted(mains):
       # Binaries do not get their full subpath appended, but we prepend
       # 'cartographer' to distinguish them after installation. So,
-      # 'io/asset_writer_main.cc' will generate a binary called
-      # 'cartographer_asset_writer'.
+      # 'io/assets_writer_main.cc' will generate a binary called
+      # 'cartographer_assets_writer'.
       name = "cartographer_" + path.basename(path.splitext(c)[0][:-5])
       AddTarget("google_binary", name, directory, [c], [])
 
