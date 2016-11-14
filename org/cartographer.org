@@ -143,9 +143,11 @@ w_x = \left\lceil \frac{W_{x}}{r} \right\rceil, w_y = \left\lceil \frac{W_y}{r} 
    foo without first locking mu. Similarly, if there are particular routines that
    should only be called by the GUI thread, then the analysis will warn if other
    threads call those routines.
-2. 
+2. template
 [fn:1] http://clang.llvm.org/docs/ThreadSafetyAnalysis.html
-
+** Transform
+1. .template
+[[https://eigen.tuxfamily.org/dox/TopicTemplateKeyword.html][The template and typename keywords in C++]]
 
 * Debug
 #+BEGIN_SRC sh

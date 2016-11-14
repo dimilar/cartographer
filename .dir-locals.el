@@ -19,7 +19,7 @@
                                      "/usr/include/eigen3"
                                      "/usr/local/include"
                                      "/usr/include/x86_64-linux-gnu"
-                                     "/scratch/progs/llvm/lib/clang/3.9.0/include"
+                                     "/usr/include/clang/4.0/include"
                                      "/usr/include/c++/4.9"                            
                                      "/usr/include/x86_64-linux-gnu/c++/4.9"
                                      "/usr/lib/gcc/x86_64-linux-gnu/4.9/include-fixed"))
