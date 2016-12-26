@@ -48,12 +48,11 @@ class KalmanLocalTrajectoryBuilder : public LocalTrajectoryBuilderInterface {
 
   void AddImuData(common::Time time, const Eigen::Vector3d& linear_acceleration,
                   const Eigen::Vector3d& angular_velocity) override;
-  std::unique_ptr<InsertionResult> AddLaserFan(
-      common::Time time, const sensor::LaserFan& laser_fan) override;
-  void AddOdometerPose(
-      common::Time time, const transform::Rigid3d& pose,
-      const kalman_filter::PoseCovariance& covariance) override;
-
+  std::unique_ptr<InsertionResult> AddRangefinderData(
+      common::Time time, const Eigen::Vector3f& origin,
+      const sensor::PointCloud& ranges) override;
+  void AddOdometerData(common::Time time,
+                       const transform::Rigid3d& pose) override;
   void AddTrajectoryNodeIndex(int trajectory_node_index) override;
   const mapping_3d::Submaps* submaps() const override;
   const PoseEstimate& pose_estimate() const override;

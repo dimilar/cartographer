@@ -44,7 +44,8 @@ SparsePoseGraph::SparsePoseGraph(
     common::ThreadPool* thread_pool,
     std::deque<mapping::TrajectoryNode::ConstantData>* constant_node_data)
     : options_(options),
-      optimization_problem_(options_.optimization_problem_options()),
+      optimization_problem_(options_.optimization_problem_options(),
+                            sparse_pose_graph::OptimizationProblem::FixZ::kNo),
       constraint_builder_(options_.constraint_builder_options(), thread_pool),
       constant_node_data_(constant_node_data) {}
 
@@ -122,9 +123,8 @@ int SparsePoseGraph::AddScan(
   }
 
   AddWorkItem([=]() REQUIRES(mutex_) {
-    ComputeConstraintsForScan(time, j, submaps, matching_submap,
-                              insertion_submaps, finished_submap, pose,
-                              covariance);
+    ComputeConstraintsForScan(j, matching_submap, insertion_submaps,
+                              finished_submap, pose, covariance);
   });
   return j;
 }
@@ -137,14 +137,47 @@ void SparsePoseGraph::AddWorkItem(std::function<void()> work_item) {
   }
 }
 
-void SparsePoseGraph::AddImuData(common::Time time,
+void SparsePoseGraph::AddImuData(const mapping::Submaps* trajectory,
+                                 common::Time time,
                                  const Eigen::Vector3d& linear_acceleration,
                                  const Eigen::Vector3d& angular_velocity) {
   common::MutexLocker locker(&mutex_);
   AddWorkItem([=]() REQUIRES(mutex_) {
-    optimization_problem_.AddImuData(time, linear_acceleration,
+    optimization_problem_.AddImuData(trajectory, time, linear_acceleration,
                                      angular_velocity);
   });
+}
+
+void SparsePoseGraph::ComputeConstraint(const int scan_index,
+                                        const int submap_index) {
+  const transform::Rigid3d relative_pose =
+      submap_transforms_[submap_index].inverse() *
+      optimization_problem_.node_data().at(scan_index).point_cloud_pose;
+
+  const mapping::Submaps* const scan_trajectory =
+      trajectory_nodes_[scan_index].constant_data->trajectory;
+  const mapping::Submaps* const submap_trajectory =
+      submap_states_[submap_index].trajectory;
+  // Only globally match against submaps not in this trajectory.
+  if (scan_trajectory != submap_trajectory &&
+      global_localization_samplers_[scan_trajectory]->Pulse()) {
+    constraint_builder_.MaybeAddGlobalConstraint(
+        submap_index, submap_states_[submap_index].submap, scan_index,
+        scan_trajectory, submap_trajectory, &trajectory_connectivity_,
+        trajectory_nodes_);
+  } else {
+    const bool scan_and_submap_trajectories_connected =
+        reverse_connected_components_.count(scan_trajectory) > 0 &&
+        reverse_connected_components_.count(submap_trajectory) > 0 &&
+        reverse_connected_components_.at(scan_trajectory) ==
+            reverse_connected_components_.at(submap_trajectory);
+    if (scan_trajectory == submap_trajectory ||
+        scan_and_submap_trajectories_connected) {
+      constraint_builder_.MaybeAddConstraint(
+          submap_index, submap_states_[submap_index].submap, scan_index,
+          trajectory_nodes_, relative_pose);
+    }
+  }
 }
 
 void SparsePoseGraph::ComputeConstraintsForOldScans(const Submap* submap) {
@@ -155,18 +188,13 @@ void SparsePoseGraph::ComputeConstraintsForOldScans(const Submap* submap) {
   const int num_nodes = node_data.size();
   for (int scan_index = 0; scan_index < num_nodes; ++scan_index) {
     if (submap_states_[submap_index].scan_indices.count(scan_index) == 0) {
-      const transform::Rigid3d relative_pose =
-          submap_transforms_[submap_index].inverse() *
-          node_data[scan_index].point_cloud_pose;
-      constraint_builder_.MaybeAddConstraint(submap_index, submap, scan_index,
-                                             trajectory_nodes_, relative_pose);
+      ComputeConstraint(scan_index, submap_index);
     }
   }
 }
 
 void SparsePoseGraph::ComputeConstraintsForScan(
-    const common::Time time, const int scan_index,
-    const Submaps* scan_trajectory, const Submap* matching_submap,
+    const int scan_index, const Submap* matching_submap,
     std::vector<const Submap*> insertion_submaps, const Submap* finished_submap,
     const transform::Rigid3d& pose,
     const kalman_filter::PoseCovariance& covariance) {
@@ -176,7 +204,10 @@ void SparsePoseGraph::ComputeConstraintsForScan(
       submap_transforms_[matching_index] *
       matching_submap->local_pose().inverse() * pose;
   CHECK_EQ(scan_index, optimization_problem_.node_data().size());
-  optimization_problem_.AddTrajectoryNode(time, optimized_pose);
+  const mapping::TrajectoryNode::ConstantData* const scan_data =
+      trajectory_nodes_[scan_index].constant_data;
+  optimization_problem_.AddTrajectoryNode(scan_data->trajectory,
+                                          scan_data->time, optimized_pose);
   for (const Submap* submap : insertion_submaps) {
     const int submap_index = GetSubmapIndex(submap);
     CHECK(!submap_states_[submap_index].finished);
@@ -184,49 +215,22 @@ void SparsePoseGraph::ComputeConstraintsForScan(
     // Unchanged covariance as (submap <- map) is a translation.
     const transform::Rigid3d constraint_transform =
         submap->local_pose().inverse() * pose;
-    constraints_.push_back(
-        Constraint{submap_index,
-                   scan_index,
-                   {constraint_transform,
-                    common::ComputeSpdMatrixSqrtInverse(
-                        covariance, options_.constraint_builder_options()
-                                        .lower_covariance_eigenvalue_bound())},
-                   Constraint::INTRA_SUBMAP});
+    constraints_.push_back(Constraint{
+        submap_index,
+        scan_index,
+        {constraint_transform, common::ComputeSpdMatrixSqrtInverse(
+                                   covariance,
+                                   options_.constraint_builder_options()
+                                       .lower_covariance_eigenvalue_bound())},
+        Constraint::INTRA_SUBMAP});
   }
-
-  // Determine if this scan should be globally localized.
-  const bool run_global_localization =
-      global_localization_samplers_[scan_trajectory]->Pulse();
 
   CHECK_LT(submap_states_.size(), std::numeric_limits<int>::max());
   const int num_submaps = submap_states_.size();
   for (int submap_index = 0; submap_index != num_submaps; ++submap_index) {
     if (submap_states_[submap_index].finished) {
       CHECK_EQ(submap_states_[submap_index].scan_indices.count(scan_index), 0);
-      const transform::Rigid3d relative_pose =
-          submap_transforms_[submap_index].inverse() * optimized_pose;
-
-      const auto* submap_trajectory = submap_states_[submap_index].trajectory;
-
-      // Only globally match against submaps not in this trajectory.
-      if (run_global_localization && scan_trajectory != submap_trajectory) {
-        constraint_builder_.MaybeAddGlobalConstraint(
-            submap_index, submap_states_[submap_index].submap, scan_index,
-            scan_trajectory, submap_trajectory, &trajectory_connectivity_,
-            trajectory_nodes_);
-      } else {
-        const bool scan_and_submap_trajectories_connected =
-            reverse_connected_components_.count(scan_trajectory) > 0 &&
-            reverse_connected_components_.count(submap_trajectory) > 0 &&
-            reverse_connected_components_.at(scan_trajectory) ==
-                reverse_connected_components_.at(submap_trajectory);
-        if (scan_trajectory == submap_trajectory ||
-            scan_and_submap_trajectories_connected) {
-          constraint_builder_.MaybeAddConstraint(
-              submap_index, submap_states_[submap_index].submap, scan_index,
-              trajectory_nodes_, relative_pose);
-        }
-      }
+      ComputeConstraint(scan_index, submap_index);
     }
   }
 
@@ -319,19 +323,7 @@ void SparsePoseGraph::RunFinalOptimization() {
 
 void SparsePoseGraph::RunOptimization() {
   if (!submap_transforms_.empty()) {
-    transform::Rigid3d submap_0_pose;
-    std::vector<const mapping::Submaps*> trajectories;
-    {
-      common::MutexLocker locker(&mutex_);
-      CHECK(!submap_states_.empty());
-      submap_0_pose = submap_states_.front().submap->local_pose();
-      for (const auto& trajectory_node : trajectory_nodes_) {
-        trajectories.push_back(trajectory_node.constant_data->trajectory);
-      }
-    }
-
-    optimization_problem_.Solve(constraints_, submap_0_pose, trajectories,
-                                &submap_transforms_);
+    optimization_problem_.Solve(constraints_, &submap_transforms_);
     common::MutexLocker locker(&mutex_);
     has_new_optimized_poses_ = true;
 

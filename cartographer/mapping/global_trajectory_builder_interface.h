@@ -22,7 +22,6 @@
 #include <string>
 
 #include "cartographer/common/time.h"
-#include "cartographer/kalman_filter/pose_tracker.h"
 #include "cartographer/mapping/submaps.h"
 #include "cartographer/mapping/trajectory_builder.h"
 #include "cartographer/sensor/laser.h"
@@ -50,14 +49,14 @@ class GlobalTrajectoryBuilderInterface {
   virtual const Submaps* submaps() const = 0;
   virtual const PoseEstimate& pose_estimate() const = 0;
 
-  virtual void AddLaserFan(common::Time time,
-                           const sensor::LaserFan& laser_fan) = 0;
+  virtual void AddRangefinderData(common::Time time,
+                                  const Eigen::Vector3f& origin,
+                                  const sensor::PointCloud& ranges) = 0;
   virtual void AddImuData(common::Time time,
                           const Eigen::Vector3d& linear_acceleration,
                           const Eigen::Vector3d& angular_velocity) = 0;
-  virtual void AddOdometerPose(
-      common::Time time, const transform::Rigid3d& pose,
-      const kalman_filter::PoseCovariance& covariance) = 0;
+  virtual void AddOdometerData(common::Time time,
+                               const transform::Rigid3d& pose) = 0;
 };
 
 }  // namespace mapping

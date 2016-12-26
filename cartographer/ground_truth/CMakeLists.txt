@@ -12,7 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-google_proto_library(transform_proto_transform
+
+google_binary(cartographer_compute_relations_metrics
   SRCS
-    transform.proto
+    compute_relations_metrics_main.cc
 )

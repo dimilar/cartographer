@@ -34,7 +34,8 @@ namespace {
 class OptimizationProblemTest : public ::testing::Test {
  protected:
   OptimizationProblemTest()
-      : optimization_problem_(CreateOptions()), rng_(45387) {}
+      : optimization_problem_(CreateOptions(), OptimizationProblem::FixZ::kNo),
+        rng_(45387) {}
 
   mapping::sparse_pose_graph::proto::OptimizationProblemOptions
   CreateOptions() {
@@ -46,7 +47,6 @@ class OptimizationProblemTest : public ::testing::Test {
           consecutive_scan_translation_penalty_factor = 1e-2,
           consecutive_scan_rotation_penalty_factor = 1e-2,
           log_solver_summary = true,
-          log_residual_histograms = true,
           ceres_solver_options = {
             use_nonmonotonic_steps = false,
             max_num_iterations = 200,
@@ -118,15 +118,14 @@ TEST_F(OptimizationProblemTest, ReducesNoise) {
         NoisyNode{RandomTransform(10., 3.), RandomYawOnlyTransform(0.2, 0.3)});
   }
 
-  std::vector<const mapping::Submaps*> trajectories;
   common::Time now = common::FromUniversal(0);
   for (const NoisyNode& node : test_data) {
-    trajectories.push_back(kTrajectory);
     const transform::Rigid3d pose =
         AddNoise(node.ground_truth_pose, node.noise);
-    optimization_problem_.AddImuData(now, Eigen::Vector3d::UnitZ() * 9.81,
+    optimization_problem_.AddImuData(kTrajectory, now,
+                                     Eigen::Vector3d::UnitZ() * 9.81,
                                      Eigen::Vector3d::Zero());
-    optimization_problem_.AddTrajectoryNode(now, pose);
+    optimization_problem_.AddTrajectoryNode(kTrajectory, now, pose);
     now += common::FromSeconds(0.01);
   }
 
@@ -166,8 +165,7 @@ TEST_F(OptimizationProblemTest, ReducesNoise) {
                             node_data[j].point_cloud_pose);
   }
 
-  optimization_problem_.Solve(constraints, kSubmap0Transform, trajectories,
-                              &submap_transforms);
+  optimization_problem_.Solve(constraints, &submap_transforms);
 
   double translation_error_after = 0.;
   double rotation_error_after = 0.;

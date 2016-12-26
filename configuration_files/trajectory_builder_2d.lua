@@ -36,13 +36,13 @@ TRAJECTORY_BUILDER_2D = {
   },
 
   ceres_scan_matcher = {
-    occupied_space_weight = 20.,
-    translation_weight = 1.,
+    occupied_space_weight = 1e1,
+    translation_weight = 1e1,
     rotation_weight = 1e2,
-    covariance_scale = 2.34e-4,
+    covariance_scale = 1e-2,
     ceres_solver_options = {
-      use_nonmonotonic_steps = true,
-      max_num_iterations = 50,
+      use_nonmonotonic_steps = false,
+      max_num_iterations = 20,
       num_threads = 1,
     },
   },
@@ -53,14 +53,8 @@ TRAJECTORY_BUILDER_2D = {
     max_angle_radians = math.rad(1.),
   },
 
-  pose_tracker = {
-    orientation_model_variance = 5e-4,
-    position_model_variance = 0.000654766,
-    velocity_model_variance = 0.053926,
-    imu_gravity_time_constant = 10.,
-    imu_gravity_variance = 1e-6,
-    num_odometry_states = 1000,
-  },
+  imu_gravity_time_constant = 10.,
+  num_odometry_states = 1000,
 
   submaps = {
     resolution = 0.05,

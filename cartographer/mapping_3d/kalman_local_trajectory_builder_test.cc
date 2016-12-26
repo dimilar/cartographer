@@ -111,6 +111,9 @@ class KalmanLocalTrajectoryBuilderTest : public ::testing::Test {
               imu_gravity_variance = 1e-4,
               num_odometry_states = 1,
             },
+
+            odometer_translational_variance = 1e-7,
+            odometer_rotational_variance = 1e-7,
           },
           optimizing_local_trajectory_builder = {
             high_resolution_grid_weight = 5.,
@@ -256,8 +259,9 @@ class KalmanLocalTrajectoryBuilderTest : public ::testing::Test {
     int num_poses = 0;
     for (const TrajectoryNode& node : expected_trajectory) {
       AddLinearOnlyImuObservation(node.time, node.pose);
-      if (local_trajectory_builder_->AddLaserFan(
-              node.time, GenerateLaserFan(node.pose)) != nullptr) {
+      const auto laser_fan = GenerateLaserFan(node.pose);
+      if (local_trajectory_builder_->AddRangefinderData(
+              node.time, laser_fan.origin, laser_fan.returns) != nullptr) {
         const auto pose_estimate = local_trajectory_builder_->pose_estimate();
         EXPECT_THAT(pose_estimate.pose, transform::IsNearly(node.pose, 1e-1));
         ++num_poses;

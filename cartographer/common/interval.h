@@ -14,17 +14,19 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_COMMON_CONFIG_H_
-#define CARTOGRAPHER_COMMON_CONFIG_H_
+#ifndef CARTOGRAPHER_COMMON_INTERVAL_H_
+#define CARTOGRAPHER_COMMON_INTERVAL_H_
 
 namespace cartographer {
 namespace common {
 
-constexpr char kConfigurationFilesDirectory[] =
-    "@CARTOGRAPHER_CONFIGURATION_FILES_DIRECTORY@";
-constexpr char kSourceDirectory[] = "@CMAKE_SOURCE_DIR@";
+template <typename T>
+struct Interval {
+  T start;
+  T end;
+};
 
 }  // namespace common
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_COMMON_CONFIG_H_
+#endif  // CARTOGRAPHER_COMMON_INTERVAL_H_

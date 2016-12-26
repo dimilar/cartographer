@@ -19,6 +19,7 @@
 #include "cartographer/common/ceres_solver_options.h"
 #include "cartographer/common/make_unique.h"
 #include "cartographer/common/time.h"
+#include "cartographer/kalman_filter/pose_tracker.h"
 #include "cartographer/mapping_3d/proto/optimizing_local_trajectory_builder_options.pb.h"
 #include "cartographer/mapping_3d/rotation_cost_function.h"
 #include "cartographer/mapping_3d/scan_matching/occupied_space_cost_functor.h"
@@ -125,23 +126,23 @@ void OptimizingLocalTrajectoryBuilder::AddImuData(
   RemoveObsoleteSensorData();
 }
 
-void OptimizingLocalTrajectoryBuilder::AddOdometerPose(
-    const common::Time time, const transform::Rigid3d& pose,
-    const kalman_filter::PoseCovariance& covariance) {
+void OptimizingLocalTrajectoryBuilder::AddOdometerData(
+    const common::Time time, const transform::Rigid3d& pose) {
   odometer_data_.push_back(OdometerData{time, pose});
   RemoveObsoleteSensorData();
 }
 
 std::unique_ptr<OptimizingLocalTrajectoryBuilder::InsertionResult>
-OptimizingLocalTrajectoryBuilder::AddLaserFan(
-    const common::Time time, const sensor::LaserFan& laser_fan_in_tracking) {
-  CHECK_GT(laser_fan_in_tracking.returns.size(), 0);
+OptimizingLocalTrajectoryBuilder::AddRangefinderData(
+    const common::Time time, const Eigen::Vector3f& origin,
+    const sensor::PointCloud& ranges) {
+  CHECK_GT(ranges.size(), 0);
 
   // TODO(hrapp): Handle misses.
   // TODO(hrapp): Where are NaNs in laser_fan_in_tracking coming from?
   sensor::PointCloud point_cloud;
-  for (const Eigen::Vector3f& laser_return : laser_fan_in_tracking.returns) {
-    const Eigen::Vector3f delta = laser_return - laser_fan_in_tracking.origin;
+  for (const Eigen::Vector3f& laser_return : ranges) {
+    const Eigen::Vector3f delta = laser_return - origin;
     const float range = delta.norm();
     if (range >= options_.laser_min_range()) {
       if (range <= options_.laser_max_range()) {
@@ -366,19 +367,12 @@ OptimizingLocalTrajectoryBuilder::AddAccumulatedLaserFan(
     return nullptr;
   }
 
-  const kalman_filter::PoseCovariance covariance =
-      1e-7 * kalman_filter::PoseCovariance::Identity();
-
   last_pose_estimate_ = {
-      time,
-      {optimized_pose, covariance},
-      {optimized_pose, covariance},
-      {optimized_pose, covariance},
-      optimized_pose,
+      time, optimized_pose,
       sensor::TransformPointCloud(filtered_laser_fan.returns,
                                   optimized_pose.cast<float>())};
 
-  return InsertIntoSubmap(time, filtered_laser_fan, optimized_pose, covariance);
+  return InsertIntoSubmap(time, filtered_laser_fan, optimized_pose);
 }
 
 const OptimizingLocalTrajectoryBuilder::PoseEstimate&
@@ -394,8 +388,7 @@ void OptimizingLocalTrajectoryBuilder::AddTrajectoryNodeIndex(
 std::unique_ptr<OptimizingLocalTrajectoryBuilder::InsertionResult>
 OptimizingLocalTrajectoryBuilder::InsertIntoSubmap(
     const common::Time time, const sensor::LaserFan& laser_fan_in_tracking,
-    const transform::Rigid3d& pose_observation,
-    const kalman_filter::PoseCovariance& covariance_estimate) {
+    const transform::Rigid3d& pose_observation) {
   if (motion_filter_.IsSimilar(time, pose_observation)) {
     return nullptr;
   }
@@ -407,8 +400,12 @@ OptimizingLocalTrajectoryBuilder::InsertIntoSubmap(
   }
   submaps_->InsertLaserFan(sensor::TransformLaserFan(
       laser_fan_in_tracking, pose_observation.cast<float>()));
+
+  const kalman_filter::PoseCovariance kCovariance =
+      1e-7 * kalman_filter::PoseCovariance::Identity();
+
   return std::unique_ptr<InsertionResult>(new InsertionResult{
-      time, laser_fan_in_tracking, pose_observation, covariance_estimate,
+      time, laser_fan_in_tracking, pose_observation, kCovariance,
       submaps_.get(), matching_submap, insertion_submaps});
 }
 
