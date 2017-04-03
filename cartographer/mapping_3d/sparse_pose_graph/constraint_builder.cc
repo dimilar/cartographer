@@ -94,7 +94,7 @@ void ConstraintBuilder::MaybeAddConstraint(
     ++pending_computations_[current_computation_];
     const int current_computation = current_computation_;
     const auto* const point_cloud =
-        &trajectory_nodes[scan_index].constant_data->laser_fan_3d.returns;
+        &trajectory_nodes[scan_index].constant_data->range_data_3d.returns;
     ScheduleSubmapScanMatcherConstructionAndQueueWorkItem(
         submap_index, submap_nodes, &submap->high_resolution_hybrid_grid,
         [=]() EXCLUDES(mutex_) {
@@ -124,7 +124,7 @@ void ConstraintBuilder::MaybeAddGlobalConstraint(
   ++pending_computations_[current_computation_];
   const int current_computation = current_computation_;
   const auto* const point_cloud =
-      &trajectory_nodes[scan_index].constant_data->laser_fan_3d.returns;
+      &trajectory_nodes[scan_index].constant_data->range_data_3d.returns;
   ScheduleSubmapScanMatcherConstructionAndQueueWorkItem(
       submap_index, submap_nodes, &submap->high_resolution_hybrid_grid,
       [=]() EXCLUDES(mutex_) {
@@ -250,12 +250,10 @@ void ConstraintBuilder::ComputeConstraint(
   // effect that, in the absence of better information, we prefer the original
   // CSM estimate.
   ceres::Solver::Summary unused_summary;
-  kalman_filter::PoseCovariance covariance;
   ceres_scan_matcher_.Match(
       pose_estimate, pose_estimate,
       {{&filtered_point_cloud, submap_scan_matcher->hybrid_grid}},
-      &pose_estimate, &covariance, &unused_summary);
-  // 'covariance' is unchanged as (submap <- map) is a translation.
+      &pose_estimate, &unused_summary);
 
   const transform::Rigid3d constraint_transform =
       submap->local_pose().inverse() * pose_estimate;
@@ -263,8 +261,8 @@ void ConstraintBuilder::ComputeConstraint(
       submap_index,
       scan_index,
       {constraint_transform,
-       common::ComputeSpdMatrixSqrtInverse(
-           covariance, options_.lower_covariance_eigenvalue_bound())},
+       1. / std::sqrt(options_.lower_covariance_eigenvalue_bound()) *
+           kalman_filter::PoseCovariance::Identity()},
       OptimizationProblem::Constraint::INTER_SUBMAP});
 
   if (options_.log_matches()) {
@@ -276,9 +274,7 @@ void ConstraintBuilder::ComputeConstraint(
          << " differs by translation " << std::fixed << std::setprecision(2)
          << difference.translation().norm() << " rotation "
          << std::setprecision(3) << transform::GetAngle(difference)
-         << " with score " << std::setprecision(1) << 100. * score
-         << "% covariance trace " << std::scientific << std::setprecision(4)
-         << covariance.trace() << ".";
+         << " with score " << std::setprecision(1) << 100. * score << "%.";
     LOG(INFO) << info.str();
   }
 }

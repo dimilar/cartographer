@@ -36,9 +36,9 @@ class TrajectoryConnectivityTest : public ::testing::Test {
           return {
             resolution = 0.05,
             half_length = 10.,
-            num_laser_fans = 10,
+            num_range_data = 10,
             output_debug_images = false,
-            laser_fan_inserter = {
+            range_data_inserter = {
               insert_free_space = true,
               hit_probability = 0.53,
               miss_probability = 0.495,
@@ -110,12 +110,10 @@ TEST_F(TrajectoryConnectivityTest, ConnectedComponents) {
     five_cluster = &connections[0];
   }
   for (int i = 0; i <= 9; ++i) {
-    EXPECT_EQ(i <= 4,
-              std::find(zero_cluster->begin(), zero_cluster->end(),
-                        trajectory(i)) != zero_cluster->end());
-    EXPECT_EQ(i > 4,
-              std::find(five_cluster->begin(), five_cluster->end(),
-                        trajectory(i)) != five_cluster->end());
+    EXPECT_EQ(i <= 4, std::find(zero_cluster->begin(), zero_cluster->end(),
+                                trajectory(i)) != zero_cluster->end());
+    EXPECT_EQ(i > 4, std::find(five_cluster->begin(), five_cluster->end(),
+                               trajectory(i)) != five_cluster->end());
   }
 }
 
@@ -123,14 +121,12 @@ TEST_F(TrajectoryConnectivityTest, ConnectionCount) {
   for (int i = 0; i < 10; ++i) {
     trajectory_connectivity_.Connect(trajectory(0), trajectory(1));
     // Permute the arguments to check invariance.
-    EXPECT_EQ(
-        i + 1,
-        trajectory_connectivity_.ConnectionCount(trajectory(1), trajectory(0)));
+    EXPECT_EQ(i + 1, trajectory_connectivity_.ConnectionCount(trajectory(1),
+                                                              trajectory(0)));
   }
   for (int i = 1; i < 9; ++i) {
-    EXPECT_EQ(0,
-              trajectory_connectivity_.ConnectionCount(trajectory(i),
-                                                       trajectory(i + 1)));
+    EXPECT_EQ(0, trajectory_connectivity_.ConnectionCount(trajectory(i),
+                                                          trajectory(i + 1)));
   }
 }
 

@@ -84,7 +84,7 @@ void SparsePoseGraph::GrowSubmapTransformsAsNeeded(
 }
 
 int SparsePoseGraph::AddScan(
-    common::Time time, const sensor::LaserFan& laser_fan_in_tracking,
+    common::Time time, const sensor::RangeData& range_data_in_tracking,
     const transform::Rigid3d& pose,
     const kalman_filter::PoseCovariance& covariance, const Submaps* submaps,
     const Submap* const matching_submap,
@@ -97,8 +97,8 @@ int SparsePoseGraph::AddScan(
   CHECK_LT(j, std::numeric_limits<int>::max());
 
   constant_node_data_->push_back(mapping::TrajectoryNode::ConstantData{
-      time, sensor::LaserFan{Eigen::Vector3f::Zero(), {}, {}},
-      sensor::Compress(laser_fan_in_tracking), submaps,
+      time, sensor::RangeData{Eigen::Vector3f::Zero(), {}, {}},
+      sensor::Compress(range_data_in_tracking), submaps,
       transform::Rigid3d::Identity()});
   trajectory_nodes_.push_back(
       mapping::TrajectoryNode{&constant_node_data_->back(), optimized_pose});
@@ -215,14 +215,14 @@ void SparsePoseGraph::ComputeConstraintsForScan(
     // Unchanged covariance as (submap <- map) is a translation.
     const transform::Rigid3d constraint_transform =
         submap->local_pose().inverse() * pose;
-    constraints_.push_back(Constraint{
-        submap_index,
-        scan_index,
-        {constraint_transform, common::ComputeSpdMatrixSqrtInverse(
-                                   covariance,
-                                   options_.constraint_builder_options()
-                                       .lower_covariance_eigenvalue_bound())},
-        Constraint::INTRA_SUBMAP});
+    constraints_.push_back(
+        Constraint{submap_index,
+                   scan_index,
+                   {constraint_transform,
+                    common::ComputeSpdMatrixSqrtInverse(
+                        covariance, options_.constraint_builder_options()
+                                        .lower_covariance_eigenvalue_bound())},
+                   Constraint::INTRA_SUBMAP});
   }
 
   CHECK_LT(submap_states_.size(), std::numeric_limits<int>::max());
@@ -293,20 +293,22 @@ void SparsePoseGraph::WaitForAllComputations() {
       common::FromSeconds(1.))) {
     std::ostringstream progress_info;
     progress_info << "Optimizing: " << std::fixed << std::setprecision(1)
-                  << 100. * (constraint_builder_.GetNumFinishedScans() -
-                             num_finished_scans_at_start) /
+                  << 100. *
+                         (constraint_builder_.GetNumFinishedScans() -
+                          num_finished_scans_at_start) /
                          (trajectory_nodes_.size() -
                           num_finished_scans_at_start)
                   << "%...";
     std::cout << "\r\x1b[K" << progress_info.str() << std::flush;
   }
   std::cout << "\r\x1b[KOptimizing: Done.     " << std::endl;
-  constraint_builder_.WhenDone([this, &notification](
-      const sparse_pose_graph::ConstraintBuilder::Result& result) {
-    constraints_.insert(constraints_.end(), result.begin(), result.end());
-    common::MutexLocker locker(&mutex_);
-    notification = true;
-  });
+  constraint_builder_.WhenDone(
+      [this, &notification](
+          const sparse_pose_graph::ConstraintBuilder::Result& result) {
+        constraints_.insert(constraints_.end(), result.begin(), result.end());
+        common::MutexLocker locker(&mutex_);
+        notification = true;
+      });
   locker.Await([&notification]() { return notification; });
 }
 

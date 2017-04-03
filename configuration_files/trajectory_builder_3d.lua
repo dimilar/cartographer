@@ -37,7 +37,6 @@ TRAJECTORY_BUILDER_3D = {
     occupied_space_weight_1 = 30.,
     translation_weight = 0.3,
     rotation_weight = 2e3,
-    covariance_scale = 2.34e-4,
     only_optimize_yaw = false,
     ceres_solver_options = {
       use_nonmonotonic_steps = false,
@@ -56,8 +55,8 @@ TRAJECTORY_BUILDER_3D = {
     high_resolution = 0.10,
     high_resolution_max_range = 20.,
     low_resolution = 0.45,
-    num_laser_fans = 160,
-    laser_fan_inserter = {
+    num_range_data = 160,
+    range_data_inserter = {
       hit_probability = 0.55,
       miss_probability = 0.49,
       num_free_space_voxels = 2,
@@ -84,6 +83,7 @@ TRAJECTORY_BUILDER_3D = {
       rotation_delta_cost_weight = 1e-1,
     },
 
+    scan_matcher_variance = 2.34e-9,
     odometer_translational_variance = 1e-7,
     odometer_rotational_variance = 1e-7,
   },

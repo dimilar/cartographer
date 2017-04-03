@@ -23,27 +23,27 @@
 #include "Eigen/Core"
 #include "cartographer/common/time.h"
 #include "cartographer/mapping/proto/trajectory.pb.h"
-#include "cartographer/sensor/laser.h"
+#include "cartographer/sensor/range_data.h"
 #include "cartographer/transform/rigid_transform.h"
 
 namespace cartographer {
 namespace mapping {
 
-struct Submaps;
+class Submaps;
 
 struct TrajectoryNode {
   struct ConstantData {
     common::Time time;
 
-    // LaserFan in 'pose' frame. Only used in the 2D case.
-    sensor::LaserFan laser_fan_2d;
+    // Range data in 'pose' frame. Only used in the 2D case.
+    sensor::RangeData range_data_2d;
 
-    // LaserFan in 'pose' frame. Only used in the 3D case.
-    sensor::CompressedLaserFan laser_fan_3d;
+    // Range data in 'pose' frame. Only used in the 3D case.
+    sensor::CompressedRangeData range_data_3d;
 
     // Trajectory this node belongs to.
-    // TODO(jmason): The naming here is confusing because 'trajectory' doesn't
-    // seem like a good name for a Submaps*. Sort this out.
+    // TODO(macmason): The naming here is confusing because 'trajectory'
+    // doesn't seem like a good name for a Submaps*. Sort this out.
     const Submaps* trajectory;
 
     // Transform from the 3D 'tracking' frame to the 'pose' frame of the

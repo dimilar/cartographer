@@ -14,17 +14,13 @@
 
 syntax = "proto2";
 
-package cartographer.mapping_2d.scan_matching.proto;
+import "cartographer/mapping_2d/proto/cell_limits.proto";
+import "cartographer/transform/proto/transform.proto";
 
-message FastCorrelativeScanMatcherOptions {
-  // Minimum linear search window in which the best possible scan alignment
-  // will be found.
-  optional double linear_search_window = 3;
+package cartographer.mapping_2d.proto;
 
-  // Minimum angular search window in which the best possible scan alignment
-  // will be found.
-  optional double angular_search_window = 4;
-
-  // Number of precomputed grids to use.
-  optional int32 branch_and_bound_depth = 2;
+message MapLimits {
+  optional double resolution = 1;
+  optional cartographer.transform.proto.Vector2d max = 2;
+  optional CellLimits cell_limits = 3;
 }

@@ -17,12 +17,47 @@
 #include "cartographer/mapping_2d/probability_grid.h"
 
 #include <random>
+#include <vector>
 
 #include "gtest/gtest.h"
 
 namespace cartographer {
 namespace mapping_2d {
 namespace {
+
+TEST(ProbabilityGridTest, ProtoConstructor) {
+  proto::ProbabilityGrid proto;
+  const MapLimits limits(1., {2., 3.}, CellLimits(4., 5.));
+  *proto.mutable_limits() = ToProto(limits);
+  for (int i = 6; i < 12; ++i) {
+    proto.mutable_cells()->Add(static_cast<uint16>(i));
+  }
+  for (int i = 13; i < 18; ++i) {
+    proto.mutable_update_indices()->Add(i);
+  }
+  proto.set_max_x(19);
+  proto.set_max_y(20);
+  proto.set_min_x(21);
+  proto.set_min_y(22);
+
+  ProbabilityGrid grid(proto);
+  EXPECT_EQ(proto.limits().DebugString(), ToProto(grid.limits()).DebugString());
+
+  // TODO(macmason): Figure out how to test the contents of cells_,
+  // update_indices_, and {min, max}_{x, y}_ gracefully.
+}
+
+TEST(ProbabilityGridTest, ToProto) {
+  ProbabilityGrid probability_grid(
+      MapLimits(1., Eigen::Vector2d(1., 1.), CellLimits(2, 2)));
+
+  const auto proto = probability_grid.ToProto();
+  EXPECT_EQ(ToProto(probability_grid.limits()).DebugString(),
+            proto.limits().DebugString());
+
+  // TODO(macmason): Figure out how to test the contents of cells_,
+  // update_indices_, and {min, max}_{x, y}_ gracefully.
+}
 
 TEST(ProbabilityGridTest, ApplyOdds) {
   ProbabilityGrid probability_grid(

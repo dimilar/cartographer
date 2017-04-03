@@ -14,45 +14,44 @@
  * limitations under the License.
  */
 
-#ifndef CARTOGRAPHER_IO_XYZ_WRITING_POINTS_PROCESSOR_H_
-#define CARTOGRAPHER_IO_XYZ_WRITING_POINTS_PROCESSOR_H_
+#ifndef CARTOGRAPHER_IO_COLORING_POINTS_PROCESSOR_H_
+#define CARTOGRAPHER_IO_COLORING_POINTS_PROCESSOR_H_
 
-#include <fstream>
 #include <memory>
-#include <string>
 
 #include "cartographer/common/lua_parameter_dictionary.h"
-#include "cartographer/io/file_writer.h"
+#include "cartographer/io/points_batch.h"
 #include "cartographer/io/points_processor.h"
 
 namespace cartographer {
 namespace io {
 
-// Writes ASCII xyz points.
-class XyzWriterPointsProcessor : public PointsProcessor {
+// Colors points with a fixed color by frame_id.
+class ColoringPointsProcessor : public PointsProcessor {
  public:
-  constexpr static const char* kConfigurationFileActionName = "write_xyz";
+  constexpr static const char* kConfigurationFileActionName = "color_points";
 
-  XyzWriterPointsProcessor(std::unique_ptr<FileWriter>, PointsProcessor* next);
+  ColoringPointsProcessor(const Color& color, const string& frame_id,
+                          PointsProcessor* next);
 
-  static std::unique_ptr<XyzWriterPointsProcessor> FromDictionary(
-      FileWriterFactory file_writer_factory,
+  static std::unique_ptr<ColoringPointsProcessor> FromDictionary(
       common::LuaParameterDictionary* dictionary, PointsProcessor* next);
 
-  ~XyzWriterPointsProcessor() override {}
+  ~ColoringPointsProcessor() override{};
 
-  XyzWriterPointsProcessor(const XyzWriterPointsProcessor&) = delete;
-  XyzWriterPointsProcessor& operator=(const XyzWriterPointsProcessor&) = delete;
+  ColoringPointsProcessor(const ColoringPointsProcessor&) = delete;
+  ColoringPointsProcessor& operator=(const ColoringPointsProcessor&) = delete;
 
   void Process(std::unique_ptr<PointsBatch> batch) override;
   FlushResult Flush() override;
 
  private:
+  const Color color_;
+  const string frame_id_;
   PointsProcessor* const next_;
-  std::unique_ptr<FileWriter> file_writer_;
 };
 
 }  // namespace io
 }  // namespace cartographer
 
-#endif  // CARTOGRAPHER_IO_XYZ_WRITING_POINTS_PROCESSOR_H_
+#endif  // CARTOGRAPHER_IO_COLORING_POINTS_PROCESSOR_H_

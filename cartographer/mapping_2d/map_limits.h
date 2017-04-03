@@ -24,9 +24,10 @@
 #include "Eigen/Geometry"
 #include "cartographer/common/math.h"
 #include "cartographer/mapping/trajectory_node.h"
+#include "cartographer/mapping_2d/proto/map_limits.pb.h"
 #include "cartographer/mapping_2d/xy_index.h"
-#include "cartographer/sensor/laser.h"
 #include "cartographer/sensor/point_cloud.h"
+#include "cartographer/sensor/range_data.h"
 #include "cartographer/transform/rigid_transform.h"
 #include "cartographer/transform/transform.h"
 #include "glog/logging.h"
@@ -45,6 +46,11 @@ class MapLimits {
     CHECK_GT(cell_limits.num_x_cells, 0.);
     CHECK_GT(cell_limits.num_y_cells, 0.);
   }
+
+  explicit MapLimits(const proto::MapLimits& map_limits)
+      : resolution_(map_limits.resolution()),
+        max_(transform::ToEigen(map_limits.max())),
+        cell_limits_(map_limits.cell_limits()) {}
 
   // Returns the cell size in meters. All cells are square and the resolution is
   // the length of one side.
@@ -79,7 +85,7 @@ class MapLimits {
   }
 
   // Computes MapLimits that contain the origin, and all laser rays (both
-  // returns and missing echoes) in the 'trajectory'.
+  // returns and misses) in the 'trajectory'.
   static MapLimits ComputeMapLimits(
       const double resolution,
       const std::vector<mapping::TrajectoryNode>& trajectory_nodes) {
@@ -101,21 +107,21 @@ class MapLimits {
     Eigen::AlignedBox2f bounding_box(Eigen::Vector2f::Zero());
     for (const auto& node : trajectory_nodes) {
       const auto& data = *node.constant_data;
-      if (!data.laser_fan_3d.returns.empty()) {
-        const sensor::LaserFan laser_fan = sensor::TransformLaserFan(
-            Decompress(data.laser_fan_3d), node.pose.cast<float>());
-        bounding_box.extend(laser_fan.origin.head<2>());
-        for (const Eigen::Vector3f& hit : laser_fan.returns) {
+      if (!data.range_data_3d.returns.empty()) {
+        const sensor::RangeData range_data = sensor::TransformRangeData(
+            Decompress(data.range_data_3d), node.pose.cast<float>());
+        bounding_box.extend(range_data.origin.head<2>());
+        for (const Eigen::Vector3f& hit : range_data.returns) {
           bounding_box.extend(hit.head<2>());
         }
       } else {
-        const sensor::LaserFan laser_fan = sensor::TransformLaserFan(
-            data.laser_fan_2d, node.pose.cast<float>());
-        bounding_box.extend(laser_fan.origin.head<2>());
-        for (const Eigen::Vector3f& hit : laser_fan.returns) {
+        const sensor::RangeData range_data = sensor::TransformRangeData(
+            data.range_data_2d, node.pose.cast<float>());
+        bounding_box.extend(range_data.origin.head<2>());
+        for (const Eigen::Vector3f& hit : range_data.returns) {
           bounding_box.extend(hit.head<2>());
         }
-        for (const Eigen::Vector3f& miss : laser_fan.misses) {
+        for (const Eigen::Vector3f& miss : range_data.misses) {
           bounding_box.extend(miss.head<2>());
         }
       }
@@ -128,6 +134,14 @@ class MapLimits {
   Eigen::Vector2d max_;
   CellLimits cell_limits_;
 };
+
+inline proto::MapLimits ToProto(const MapLimits& map_limits) {
+  proto::MapLimits result;
+  result.set_resolution(map_limits.resolution());
+  *result.mutable_max() = transform::ToProto(map_limits.max());
+  *result.mutable_cell_limits() = ToProto(map_limits.cell_limits());
+  return result;
+}
 
 }  // namespace mapping_2d
 }  // namespace cartographer

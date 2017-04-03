@@ -24,7 +24,7 @@
 #include "cartographer/common/time.h"
 #include "cartographer/mapping_3d/hybrid_grid.h"
 #include "cartographer/mapping_3d/local_trajectory_builder_options.h"
-#include "cartographer/sensor/laser.h"
+#include "cartographer/sensor/range_data.h"
 #include "cartographer/transform/rigid_transform.h"
 #include "cartographer/transform/rigid_transform_test_helpers.h"
 #include "cartographer/transform/transform.h"
@@ -69,7 +69,6 @@ class KalmanLocalTrajectoryBuilderTest : public ::testing::Test {
             occupied_space_weight_1 = 20.,
             translation_weight = 0.1,
             rotation_weight = 0.3,
-            covariance_scale = 1e-1,
             only_optimize_yaw = false,
             ceres_solver_options = {
               use_nonmonotonic_steps = true,
@@ -86,8 +85,8 @@ class KalmanLocalTrajectoryBuilderTest : public ::testing::Test {
             high_resolution = 0.2,
             high_resolution_max_range = 50.,
             low_resolution = 0.5,
-            num_laser_fans = 45000,
-            laser_fan_inserter = {
+            num_range_data = 45000,
+            range_data_inserter = {
               hit_probability = 0.7,
               miss_probability = 0.4,
               num_free_space_voxels = 0,
@@ -112,6 +111,7 @@ class KalmanLocalTrajectoryBuilderTest : public ::testing::Test {
               num_odometry_states = 1,
             },
 
+            scan_matcher_variance = 1e-6,
             odometer_translational_variance = 1e-7,
             odometer_rotational_variance = 1e-7,
           },
@@ -189,7 +189,7 @@ class KalmanLocalTrajectoryBuilderTest : public ::testing::Test {
     return first * (to - from) + from;
   }
 
-  sensor::LaserFan GenerateLaserFan(const transform::Rigid3d& pose) {
+  sensor::RangeData GenerateRangeData(const transform::Rigid3d& pose) {
     // 360 degree rays at 16 angles.
     sensor::PointCloud directions_in_laser_frame;
     for (int r = -8; r != 8; ++r) {
@@ -259,9 +259,9 @@ class KalmanLocalTrajectoryBuilderTest : public ::testing::Test {
     int num_poses = 0;
     for (const TrajectoryNode& node : expected_trajectory) {
       AddLinearOnlyImuObservation(node.time, node.pose);
-      const auto laser_fan = GenerateLaserFan(node.pose);
+      const auto range_data = GenerateRangeData(node.pose);
       if (local_trajectory_builder_->AddRangefinderData(
-              node.time, laser_fan.origin, laser_fan.returns) != nullptr) {
+              node.time, range_data.origin, range_data.returns) != nullptr) {
         const auto pose_estimate = local_trajectory_builder_->pose_estimate();
         EXPECT_THAT(pose_estimate.pose, transform::IsNearly(node.pose, 1e-1));
         ++num_poses;

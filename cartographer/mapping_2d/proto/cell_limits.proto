@@ -14,17 +14,9 @@
 
 syntax = "proto2";
 
-package cartographer.mapping_2d.scan_matching.proto;
+package cartographer.mapping_2d.proto;
 
-message FastCorrelativeScanMatcherOptions {
-  // Minimum linear search window in which the best possible scan alignment
-  // will be found.
-  optional double linear_search_window = 3;
-
-  // Minimum angular search window in which the best possible scan alignment
-  // will be found.
-  optional double angular_search_window = 4;
-
-  // Number of precomputed grids to use.
-  optional int32 branch_and_bound_depth = 2;
+message CellLimits {
+  optional int32 num_x_cells = 1;
+  optional int32 num_y_cells = 2;
 }

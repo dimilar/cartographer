@@ -16,6 +16,7 @@
 
 #include "cartographer/sensor/collator.h"
 
+#include <array>
 #include <memory>
 #include <array>
 
