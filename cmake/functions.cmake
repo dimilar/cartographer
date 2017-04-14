@@ -41,11 +41,10 @@ macro(_common_compile_stuff VISIBILITY)
   set(TARGET_COMPILE_FLAGS "${TARGET_COMPILE_FLAGS} ${GOOG_CXX_FLAGS}")
 
   _macOS_homebrew_flags()
-
+  
   set_target_properties(${NAME} PROPERTIES
     COMPILE_FLAGS ${TARGET_COMPILE_FLAGS}
-    LINK_FLAGS ${TARGET_LINK_FLAGS} 
-    )
+    LINK_FLAGS ${TARGET_LINK_FLAGS})
 
   target_include_directories(${NAME} PUBLIC ${PROJECT_NAME})
   target_link_libraries(${NAME} PUBLIC ${PROJECT_NAME})
@@ -56,7 +55,7 @@ function(google_test NAME)
 
   add_executable(${NAME}
     ${ARG_SRCS} ${ARG_HDRS}
-    )
+  )
   _common_compile_stuff("PRIVATE")
 
   # Make sure that gmock always includes the correct gtest/gtest.h.
@@ -72,7 +71,7 @@ function(google_binary NAME)
 
   add_executable(${NAME}
     ${ARG_SRCS} ${ARG_HDRS}
-    )
+  )
 
   _common_compile_stuff("PRIVATE")
 
@@ -92,10 +91,10 @@ endfunction()
 macro(google_initialize_cartographer_project)
   if(CARTOGRAPHER_CMAKE_DIR)
     set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}
-      ${CARTOGRAPHER_CMAKE_DIR}/modules)
+        ${CARTOGRAPHER_CMAKE_DIR}/modules)
   else()
     set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH}
-      ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules)
+        ${CMAKE_CURRENT_SOURCE_DIR}/cmake/modules)
   endif()
   set(GOOG_CXX_FLAGS "-pthread -std=c++11 ${GOOG_CXX_FLAGS}")
 
@@ -141,7 +140,7 @@ macro(google_initialize_cartographer_project)
   add_custom_target(${PROJECT_NAME}_detect_changes ALL
     COMMAND ${DETECT_CHANGES_CMD}
     VERBATIM
-    )
+  )
   if(NOT EXISTS ${FILES_LIST_PATH})
     execute_process(COMMAND ${DETECT_CHANGES_CMD})
   endif()

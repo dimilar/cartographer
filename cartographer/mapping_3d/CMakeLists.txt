@@ -15,10 +15,10 @@
 add_subdirectory("scan_matching")
 add_subdirectory("sparse_pose_graph")
 
-google_test(mapping_3d_hybrid_grid_test
-  SRCS
-    hybrid_grid_test.cc
-)
+#google_test(mapping_3d_hybrid_grid_test
+#  SRCS
+#    hybrid_grid_test.cc
+#)
 
 google_test(mapping_3d_kalman_local_trajectory_builder_test
   SRCS
